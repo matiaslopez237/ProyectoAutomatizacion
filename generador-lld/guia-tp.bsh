@@ -1,0 +1,218 @@
+source(System.getProperty("gen.dir")+"/lib.bsh");
+OUT = System.getProperty("repo.dir")+"/Ejercicios/Guia TP/";
+TEMPLATE = System.getProperty("repo.dir")+"/Ejercicios/EJ autoatizacion.lld";
+X0 = 140; DX = 110; XC = 760; XS = 600;
+fresh() { dd = loadDrawing(TEMPLATE); clearDrawing(dd); return dd; }
+C(d, name, x, y, neg, label) { f = contact(d, name, x, y, neg); if (label != null) comment(d, label, x - 12, y - 30); return f; }
+Q(d, name, y, label) { f = coil(d, name, XC, y); if (label != null) comment(d, label, XC - 12, y - 30); return f; }
+TON(d, y, secs, label) { f = onDelay(d, XS, y + 10, secs); if (label != null) comment(d, label, XS + 50, y - 10); return f; }
+SF(d, cls, y, label) { f = sfb(d, cls, XS, y); if (label != null) comment(d, label, XS + 60, y - 14); return f; }
+num(f) { return f.getBlock().getNumberString(); }
+header(d, lines) { for (i=0;i<lines.length;i++) comment(d, lines[i], 60, 10 + i*16); }
+done(d, file) { saveDrawing(d, OUT + file); print("== " + file); dumpModel(loadDrawing(OUT + file)); }
+// rung of series contacts from the rail to a target figure
+series(d, figs, target) { wire(d, null, figs[0]); for (i=1;i<figs.length;i++) wire(d, figs[i-1], figs[i]); if (target != null) wire(d, figs[figs.length-1], target); }
+
+// ======================= TP1 =======================
+d = fresh();
+header(d, new String[]{"TP1 - Ej 1a: Circuito serie (funcion AND)   Q1 = I1 . I2",
+  "I1 (I0.0) llave 1 | I2 (I0.1) llave 2 | Q1 (Q0.0) lampara"});
+q = Q(d,"Q1",140,"lampara");
+series(d, new Object[]{C(d,"I1",X0,140,false,"llave 1"), C(d,"I2",X0+DX,140,false,"llave 2")}, q);
+done(d, "TP1 Ej1a Serie AND.lld");
+
+d = fresh();
+header(d, new String[]{"TP1 - Ej 1b: Circuito paralelo (funcion OR)   Q1 = I1 + I2",
+  "I1 (I0.0) llave 1 | I2 (I0.1) llave 2 | Q1 (Q0.0) lampara"});
+q = Q(d,"Q1",140,"lampara");
+a = C(d,"I1",X0,140,false,"llave 1"); b = C(d,"I2",X0,210,false,"llave 2");
+wire(d,null,a); wire(d,null,b); wire(d,a,q); wire(d,b,q);
+done(d, "TP1 Ej1b Paralelo OR.lld");
+
+d = fresh();
+header(d, new String[]{"TP1 - Ej 1c: Circuito serie-paralelo   Q1 = (I1 + I2) . I3",
+  "I1 (I0.0) llave 1 | I2 (I0.1) llave 2 | I3 (I0.2) llave 3 | Q1 (Q0.0) lampara"});
+q = Q(d,"Q1",140,"lampara");
+a = C(d,"I1",X0,140,false,"llave 1"); b = C(d,"I2",X0,210,false,"llave 2"); c = C(d,"I3",X0+2*DX,140,false,"llave 3");
+wire(d,null,a); wire(d,null,b); wire(d,a,c); wire(d,b,c); wire(d,c,q);
+done(d, "TP1 Ej1c Serie-paralelo.lld");
+
+d = fresh();
+header(d, new String[]{"TP1 - Ej 2: Doble paralelo   Q1 = (I1 + I2 + I3) . I7 . (I4 + I5 + I6)",
+  "I1..I7 (I0.0..I0.6) llaves 1 a 7 | Q1 (Q0.0) lampara de salida"});
+q = Q(d,"Q1",140,"lampara");
+a = C(d,"I1",X0,140,false,"llave 1"); b = C(d,"I2",X0,210,false,"llave 2"); c = C(d,"I3",X0,280,false,"llave 3");
+s = C(d,"I7",X0+2*DX,140,false,"llave 7");
+e = C(d,"I4",X0+4*DX,140,false,"llave 4"); f = C(d,"I5",X0+4*DX,210,false,"llave 5"); g = C(d,"I6",X0+4*DX,280,false,"llave 6");
+wire(d,null,a); wire(d,null,b); wire(d,null,c); wire(d,a,s); wire(d,b,s); wire(d,c,s);
+wire(d,s,e); wire(d,s,f); wire(d,s,g); wire(d,e,q); wire(d,f,q); wire(d,g,q);
+done(d, "TP1 Ej2 Doble paralelo.lld");
+
+// ======================= TP2 =======================
+d = fresh();
+header(d, new String[]{"TP2 - Ej 1: Arranque directo de bomba",
+  "I1 (I0.0) arranque NA | I2 (I0.1) parada NC | I3 (I0.2) rele termico NC | Q1 (Q0.0) contactor bomba K1"});
+q = Q(d,"Q1",140,"bomba K1");
+a = C(d,"I1",X0,140,false,"arranque"); s = C(d,"Q1",X0,210,false,"autoret.");
+p = C(d,"I2",X0+2*DX,140,true,"parada"); t = C(d,"I3",X0+3*DX,140,true,"termico");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,q);
+done(d, "TP2 Ej1 Arranque directo bomba.lld");
+
+d = fresh();
+header(d, new String[]{"TP2 - Ej 2: Bomba en modo manual y automatico",
+  "I1 (I0.0) arranque | I2 (I0.1) parada | I3 (I0.2) termico | I4 (I0.3) selector 0=manual 1=auto",
+  "I5 (I0.4) LDR nivel minimo (1 = hay liquido) | I6 (I0.5) LDR nivel maximo (1 = tanque lleno) | Q1 (Q0.0) bomba K1"});
+m1 = Q(d,"M1",160,"marcha manual"); m2 = Q(d,"M2",320,"marcha auto"); q = Q(d,"Q1",480,"bomba K1");
+a = C(d,"I1",X0,160,false,"arranque"); s = C(d,"M1",X0,230,false,"autoret.");
+p = C(d,"I2",X0+2*DX,160,true,"parada"); sel = C(d,"I4",X0+3*DX,160,true,"manual");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,sel); wire(d,sel,m1);
+a = C(d,"I6",X0,320,false,"nivel max"); s = C(d,"M2",X0,390,false,"autoret.");
+p = C(d,"I5",X0+2*DX,320,false,"nivel min"); sel = C(d,"I4",X0+3*DX,320,false,"auto");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,sel); wire(d,sel,m2);
+a = C(d,"M1",X0,480,false,"manual"); b = C(d,"M2",X0,550,false,"auto"); t = C(d,"I3",X0+2*DX,480,true,"termico");
+wire(d,null,a); wire(d,null,b); wire(d,a,t); wire(d,b,t); wire(d,t,q);
+done(d, "TP2 Ej2 Bomba manual-automatico.lld");
+
+d = fresh();
+header(d, new String[]{"TP2 - Ej 3: Inversion de giro (para invertir hay que pasar por PARO)",
+  "I1 (I0.0) termico NA | I2 (I0.1) parada NC | I3 (I0.2) giro izquierda | I4 (I0.3) giro derecha",
+  "Q1 (Q0.0) contactor izquierda K1 | Q2 (Q0.1) contactor derecha K2 | Q3 (Q0.2) lampara averia"});
+q1 = Q(d,"Q1",160,"izquierda K1"); q2 = Q(d,"Q2",320,"derecha K2"); l = Q(d,"Q3",480,"averia");
+a = C(d,"I3",X0,160,false,"izquierda"); s = C(d,"Q1",X0,230,false,"autoret.");
+p = C(d,"I2",X0+2*DX,160,true,"parada"); t = C(d,"I1",X0+3*DX,160,true,"termico"); e = C(d,"Q2",X0+4*DX,160,true,"bloqueo");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,e); wire(d,e,q1);
+a = C(d,"I4",X0,320,false,"derecha"); s = C(d,"Q2",X0,390,false,"autoret.");
+p = C(d,"I2",X0+2*DX,320,true,"parada"); t = C(d,"I1",X0+3*DX,320,true,"termico"); e = C(d,"Q1",X0+4*DX,320,true,"bloqueo");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,e); wire(d,e,q2);
+series(d, new Object[]{C(d,"I1",X0,480,false,"termico")}, l);
+done(d, "TP2 Ej3 Inversion de giro.lld");
+
+// ======================= TP3 =======================
+d = fresh();
+header(d, new String[]{"TP3 - Ej 1: Arranque estrella-triangulo (T001 = 5 s)",
+  "I1 (I0.0) arranque | I2 (I0.1) parada NC | I3 (I0.2) termico NC | Q1 (Q0.0) linea K1 | Q2 (Q0.1) estrella K2 | Q3 (Q0.2) triangulo K3"});
+q1 = Q(d,"Q1",140,"linea K1"); q2 = Q(d,"Q2",390,"estrella K2"); q3 = Q(d,"Q3",480,"triangulo K3");
+a = C(d,"I1",X0,140,false,"arranque"); s = C(d,"Q1",X0,210,false,"autoret.");
+p = C(d,"I2",X0+2*DX,140,true,"parada"); t = C(d,"I3",X0+3*DX,140,true,"termico");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,q1);
+tm = TON(d, 290, 5, "tiempo estrella"); T = num(tm);
+series(d, new Object[]{C(d,"Q1",X0,290,false,"linea"), C(d,"Q3",X0+DX,290,true,"triangulo")}, tm);
+series(d, new Object[]{C(d,"Q1",X0,390,false,"linea"), C(d,T,X0+DX,390,true,"fin tiempo"), C(d,"Q3",X0+2*DX,390,true,"bloqueo")}, q2);
+a = C(d,"Q1",X0,480,false,"linea"); b = C(d,T,X0+DX,480,false,"fin tiempo"); s = C(d,"Q3",X0+DX,550,false,"autoret.");
+e = C(d,"Q2",X0+3*DX,480,true,"bloqueo");
+wire(d,null,a); wire(d,a,b); wire(d,a,s); wire(d,b,e); wire(d,s,e); wire(d,e,q3);
+done(d, "TP3 Ej1 Estrella-triangulo.lld");
+
+d = fresh();
+header(d, new String[]{"TP3 - Ej 2: Puerta corrediza automatica (cierre 5 s despues de abrir)",
+  "I1 (I0.0) S1 alfombra NA | I2 (I0.1) S2 fin carrera cerrado | I3 (I0.2) S3 fin carrera abierto",
+  "Q1 (Q0.0) apertura K1 | Q2 (Q0.1) cierre K2 | Q3 (Q0.2) lampara apertura L1 | Q4 (Q0.3) lampara cierre L2"});
+q1 = Q(d,"Q1",160,"abrir K1"); q2 = Q(d,"Q2",400,"cerrar K2"); l1 = Q(d,"Q3",540,"L1"); l2 = Q(d,"Q4",620,"L2");
+a = C(d,"I1",X0,160,false,"S1"); s = C(d,"Q1",X0,230,false,"autoret.");
+p = C(d,"I3",X0+2*DX,160,true,"S3 abierto"); e = C(d,"Q2",X0+3*DX,160,true,"bloqueo");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,e); wire(d,e,q1);
+tm = TON(d, 310, 5, "espera cierre"); T = num(tm);
+series(d, new Object[]{C(d,"I3",X0,310,false,"S3 abierto")}, tm);
+a = C(d,T,X0,400,false,"5 s"); s = C(d,"Q2",X0,470,false,"autoret.");
+p = C(d,"I2",X0+2*DX,400,true,"S2 cerrado"); r = C(d,"I1",X0+3*DX,400,true,"S1 reabre"); e = C(d,"Q1",X0+4*DX,400,true,"bloqueo");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,r); wire(d,r,e); wire(d,e,q2);
+series(d, new Object[]{C(d,"Q1",X0,540,false,"abriendo")}, l1);
+series(d, new Object[]{C(d,"Q2",X0,620,false,"cerrando")}, l2);
+done(d, "TP3 Ej2 Puerta corrediza.lld");
+
+d = fresh();
+header(d, new String[]{"TP3 - Ej 3: Playa de estacionamiento (capacidad 50) con contador ascendente/descendente",
+  "I1 (I0.0) conmutador habilitacion | I2 (I0.1) sensor ingreso | I3 (I0.2) sensor egreso",
+  "Q1 (Q0.0) cartel HAY LUGAR | Q2 (Q0.1) cartel NO HAY LUGAR       Contador: On = 50, Off = 50"});
+q1 = Q(d,"Q1",420,"HAY LUGAR"); q2 = Q(d,"Q2",500,"NO HAY LUGAR");
+cn = SF(d, "CounterBlock", 160, "autos"); p = cn.getBlock().getParameter(); p.getOn().setIntValue(50); p.getOff().setIntValue(50); refreshParam(cn); CN = num(cn);
+r = C(d,"I1",X0,140,true,"apagado: reset"); wireIn(d,null,r,0); wireIn(d,r,cn,0);
+a = C(d,"I2",X0,220,false,"ingreso"); b = C(d,"I3",X0,290,false,"egreso");
+wireIn(d,null,a,0); wireIn(d,null,b,0); wireIn(d,a,cn,1); wireIn(d,b,cn,1); wireIn(d,b,cn,2);
+series(d, new Object[]{C(d,"I1",X0,420,false,"habilitado"), C(d,CN,X0+DX,420,true,"menor a 50")}, q1);
+series(d, new Object[]{C(d,"I1",X0,500,false,"habilitado"), C(d,CN,X0+DX,500,false,"50 o mas")}, q2);
+done(d, "TP3 Ej3 Playa de estacionamiento.lld");
+
+d = fresh();
+header(d, new String[]{"TP3 - Ej 4: Cruce de dos semaforos (ciclo 10 s + 3 s + 10 s + 3 s = 26 s)",
+  "I1 (I0.0) conmutador general | S1: Q1 rojo (Q0.0), Q2 amarillo (Q0.1), Q3 verde (Q0.2)",
+  "S2: Q4 rojo (Q0.3), Q5 amarillo (Q0.4), Q6 verde (Q0.5)"});
+t1 = TON(d, 130, 10, "estado 1 (10 s)"); t2 = TON(d, 210, 3, "estado 2 (3 s)"); t3 = TON(d, 290, 10, "estado 3 (10 s)"); t4 = TON(d, 370, 3, "estado 4 (3 s)");
+T1=num(t1); T2=num(t2); T3=num(t3); T4=num(t4);
+series(d, new Object[]{C(d,"I1",X0,130,false,"marcha"), C(d,T4,X0+DX,130,true,"reinicio ciclo")}, t1);
+series(d, new Object[]{C(d,T1,X0,210,false,null)}, t2);
+series(d, new Object[]{C(d,T2,X0,290,false,null)}, t3);
+series(d, new Object[]{C(d,T3,X0,370,false,null)}, t4);
+g1 = Q(d,"Q3",470,"S1 verde"); a1 = Q(d,"Q2",540,"S1 amarillo"); r1 = Q(d,"Q1",610,"S1 rojo");
+r2 = Q(d,"Q4",680,"S2 rojo"); g2 = Q(d,"Q6",750,"S2 verde"); a2 = Q(d,"Q5",820,"S2 amarillo");
+series(d, new Object[]{C(d,"I1",X0,470,false,"marcha"), C(d,T1,X0+DX,470,true,null)}, g1);
+series(d, new Object[]{C(d,T1,X0,540,false,null), C(d,T2,X0+DX,540,true,null)}, a1);
+series(d, new Object[]{C(d,T2,X0,610,false,null)}, r1);
+series(d, new Object[]{C(d,"I1",X0,680,false,"marcha"), C(d,T2,X0+DX,680,true,null)}, r2);
+series(d, new Object[]{C(d,T2,X0,750,false,null), C(d,T3,X0+DX,750,true,null)}, g2);
+series(d, new Object[]{C(d,T3,X0,820,false,null)}, a2);
+done(d, "TP3 Ej4 Semaforos.lld");
+
+// ======================= TP4 =======================
+d = fresh();
+header(d, new String[]{"TP4 - Ej 1: Arranque directo de bomba con SET/RESET (rele de enclavamiento RS)",
+  "I1 (I0.0) arranque NA | I2 (I0.1) parada NC | I3 (I0.2) termico NC | Q1 (Q0.0) bomba K1",
+  "SET = I1     RESET = I2 + I3 (pulsar parada o disparo del termico)"});
+rs = SF(d, "LatchingRelayBlock", 150, "SET / RESET"); RS = num(rs); q = Q(d,"Q1",330,"bomba K1");
+a = C(d,"I1",X0,130,false,"arranque"); wire(d,null,a); wireIn(d,a,rs,0);
+b = C(d,"I2",X0,210,false,"parada"); c = C(d,"I3",X0,280,false,"termico");
+wire(d,null,b); wire(d,null,c); wireIn(d,b,rs,1); wireIn(d,c,rs,1);
+series(d, new Object[]{C(d,RS,X0,330,false,"memoria")}, q);
+done(d, "TP4 Ej1 Bomba SET-RESET.lld");
+
+d = fresh();
+header(d, new String[]{"TP4 - Ej 2: Bomba manual / automatico con SET/RESET",
+  "I1 (I0.0) arranque | I2 (I0.1) parada | I3 (I0.2) termico | I4 (I0.3) selector 0=manual 1=auto",
+  "I5 (I0.4) LDR nivel minimo (1 = hay liquido) | I6 (I0.5) LDR nivel maximo (1 = lleno) | Q1 (Q0.0) bomba K1",
+  "SET = I1 en manual  o  I6 en auto      RESET = I2 + I3 + (auto y nivel bajo minimo)"});
+rs = SF(d, "LatchingRelayBlock", 200, "SET / RESET"); RS = num(rs); q = Q(d,"Q1",520,"bomba K1");
+a = C(d,"I1",X0,150,false,"arranque"); a2 = C(d,"I4",X0+DX,150,true,"manual");
+b = C(d,"I6",X0,220,false,"nivel max"); b2 = C(d,"I4",X0+DX,220,false,"auto");
+wire(d,null,a); wire(d,a,a2); wire(d,null,b); wire(d,b,b2); wireIn(d,a2,rs,0); wireIn(d,b2,rs,0);
+c = C(d,"I2",X0,300,false,"parada"); e = C(d,"I3",X0,370,false,"termico");
+f = C(d,"I4",X0,440,false,"auto"); f2 = C(d,"I5",X0+DX,440,true,"bajo minimo");
+wire(d,null,c); wire(d,null,e); wire(d,null,f); wire(d,f,f2);
+wireIn(d,c,rs,1); wireIn(d,e,rs,1); wireIn(d,f2,rs,1);
+series(d, new Object[]{C(d,RS,X0,520,false,"memoria")}, q);
+done(d, "TP4 Ej2 Bomba manual-auto SET-RESET.lld");
+
+d = fresh();
+header(d, new String[]{"TP4 - Ej 3: Inversion de giro con SET/RESET",
+  "I1 (I0.0) termico NA | I2 (I0.1) parada NC | I3 (I0.2) giro izquierda | I4 (I0.3) giro derecha",
+  "Q1 (Q0.0) izquierda K1 | Q2 (Q0.1) derecha K2 | Q3 (Q0.2) lampara averia",
+  "SET solo si el otro sentido esta en RESET; RESET por parada o termico"});
+q1 = Q(d,"Q1",360,"izquierda K1"); q2 = Q(d,"Q2",700,"derecha K2"); l = Q(d,"Q3",780,"averia");
+rs1 = SF(d, "LatchingRelayBlock", 170, "RS izquierda"); R1 = num(rs1);
+a = C(d,"I3",X0,150,false,"izquierda"); a2 = C(d,"Q2",X0+DX,150,true,"bloqueo");
+wire(d,null,a); wire(d,a,a2); wireIn(d,a2,rs1,0);
+b = C(d,"I2",X0,220,false,"parada"); c = C(d,"I1",X0,290,false,"termico");
+wire(d,null,b); wire(d,null,c); wireIn(d,b,rs1,1); wireIn(d,c,rs1,1);
+series(d, new Object[]{C(d,R1,X0,360,false,null)}, q1);
+rs2 = SF(d, "LatchingRelayBlock", 510, "RS derecha"); R2 = num(rs2);
+a = C(d,"I4",X0,490,false,"derecha"); a2 = C(d,"Q1",X0+DX,490,true,"bloqueo");
+wire(d,null,a); wire(d,a,a2); wireIn(d,a2,rs2,0);
+b = C(d,"I2",X0,560,false,"parada"); c = C(d,"I1",X0,630,false,"termico");
+wire(d,null,b); wire(d,null,c); wireIn(d,b,rs2,1); wireIn(d,c,rs2,1);
+series(d, new Object[]{C(d,R2,X0,700,false,null)}, q2);
+series(d, new Object[]{C(d,"I1",X0,780,false,"termico")}, l);
+done(d, "TP4 Ej3 Inversion de giro SET-RESET.lld");
+
+// ======================= TP5 =======================
+d = fresh();
+header(d, new String[]{"TP5 - Ej 2: Lectura de temperatura (AI1 0-10 V = 0-100 C) y escalonamiento de salidas",
+  "AI1 sensor 0-10 V (LOGO lo lee 0-1000, ganancia 0.1 => 0-100 C) | I1 (I0.0) habilitacion",
+  "Q1 50 C | Q2 60 C | Q3 70 C | Q4 80 C | Q5 90 C | Q6 100 C   (disparador analogico On = Off = umbral - 1)"});
+for (k=0;k<6;k++) {
+  y = 130 + k*110; thr = 50 + 10*k;
+  tr = SF(d, "AnalogTriggerBlock", y, thr+" C"); tp = tr.getBlock().getParameter();
+  tp.setGain(10); tp.setOnTrigger(thr-1); tp.setOffTrigger(thr-1); refreshParam(tr);
+  ai = anaContact(d, "AI1", X0, y); wireIn(d,null,ai,0); wireIn(d,ai,tr,0);
+  qq = Q(d,"Q"+(k+1), y+60, "indicador "+thr+" C");
+  series(d, new Object[]{C(d,"I1",X0,y+60,false,"habilitacion"), C(d,num(tr),X0+DX,y+60,false,null)}, qq);
+}
+done(d, "TP5 Ej2 Temperatura analogica.lld");

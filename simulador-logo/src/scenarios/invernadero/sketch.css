@@ -1,0 +1,92 @@
+.gh {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  border-radius: 6px;
+}
+
+.gh-rain line {
+  stroke: #d8e6f2;
+  stroke-width: 1.2;
+  opacity: 0.7;
+  animation: gh-rain 0.8s linear infinite;
+}
+@keyframes gh-rain {
+  from { transform: translateY(0); }
+  to { transform: translateY(240px); }
+}
+
+.gh-drop {
+  fill: #6cc0ff;
+  animation: gh-drop 0.8s ease-in infinite;
+}
+@keyframes gh-drop {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(112px); opacity: 0.2; }
+}
+
+.gh-mist ellipse {
+  fill: #ffffff;
+  opacity: 0.45;
+  animation: gh-mist 3.2s ease-in-out infinite alternate;
+}
+@keyframes gh-mist {
+  from { transform: translateX(-10px); opacity: 0.25; }
+  to { transform: translateX(10px); opacity: 0.55; }
+}
+
+.gh-spin {
+  animation: gh-spin 0.45s linear infinite;
+}
+@keyframes gh-spin {
+  to { transform: rotate(360deg); }
+}
+
+.gh-heatwaves path {
+  fill: none;
+  stroke: #ffb27a;
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: gh-heat 1.4s ease-out infinite;
+}
+@keyframes gh-heat {
+  from { transform: translateY(0); opacity: 0.9; }
+  to { transform: translateY(-14px); opacity: 0; }
+}
+
+.gh-beacon { fill: #6b2020; }
+.gh-beacon.is-on {
+  fill: #ff3b30;
+  animation: gh-blink 0.6s steps(2, jump-none) infinite;
+}
+@keyframes gh-blink {
+  from { opacity: 1; }
+  to { opacity: 0.25; }
+}
+
+.gh-tag rect { fill: rgba(20, 26, 32, 0.72); }
+.gh-tag circle { fill: #59626b; }
+.gh-tag text { fill: #e9eef2; font: 600 10px var(--font-ui); }
+.gh-tag .gh-tag-op { font-family: var(--font-mono); fill: #9fb0bd; }
+.gh-tag.is-on circle { fill: #4ade6b; }
+.gh-tag.is-on .gh-tag-op { fill: #4ade6b; }
+
+.gh-readout rect { fill: rgba(20, 26, 32, 0.66); }
+.gh-readout text {
+  fill: #eef3f6;
+  font: 500 12px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-rain line,
+  .gh-drop,
+  .gh-mist ellipse,
+  .gh-spin,
+  .gh-heatwaves path,
+  .gh-beacon.is-on {
+    animation: none;
+  }
+  .gh-drop { transform: translateY(40px); }
+}

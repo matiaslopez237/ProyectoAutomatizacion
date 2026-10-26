@@ -1,0 +1,102 @@
+import java.io.*;
+import java.util.*;
+import java.awt.Point;
+import DE.siemens.ad.pdraw.figures.*;
+import DE.siemens.ad.kop.model.block.*;
+lp = new Properties(); lp.load(new FileInputStream(System.getProperty("logo.dir")+"/Start.lax"));
+for (e = lp.propertyNames(); e.hasMoreElements();) { k=e.nextElement(); System.setProperty(k, lp.getProperty(k)); }
+
+loadDrawing(path) {
+  in = new ObjectInputStream(new FileInputStream(path));
+  in.readInt(); in.readInt(); in.readInt(); n=in.readInt();
+  for (i=0;i<n;i++) in.readObject();
+  dd = in.readObject(); in.close(); return dd;
+}
+
+saveDrawing(d, path) {
+  out = new ObjectOutputStream(new FileOutputStream(path));
+  out.writeInt(7); out.writeInt(0); out.writeInt(100);
+  v = new Vector(); fe = d.figures(); while (fe.hasMoreElements()) v.add(fe.nextElement());
+  out.writeInt(v.size());
+  for (i=0;i<v.size();i++) out.writeObject(v.get(i));
+  out.writeObject(d); out.close();
+}
+
+clearDrawing(d) {
+  v = new Vector(); fe = d.figures(); while (fe.hasMoreElements()) v.add(fe.nextElement());
+  for (i=0;i<v.size();i++) if (v.get(i) instanceof CH.ifa.draw.framework.ConnectionFigure) d.remove(v.get(i));
+  for (i=0;i<v.size();i++) { f=v.get(i); if (!(f instanceof CH.ifa.draw.framework.ConnectionFigure) && !(f instanceof DE.siemens.ad.kop.figures.LeftPowerRailFigure)) d.remove(f); }
+}
+
+dumpModel(d) {
+  wd = d.getWiringDiagram(); bl = wd.getCopyOfBlocks(); 
+  for (i=0;i<bl.length;i++){ b=bl[i]; if(b==null) continue; s="";
+    ins=b.getInConnectors(); if(ins!=null) for(j=0;j<ins.length;j++){ lc=ins[j].getLinkedConnectorsList(); s+=" in"+j+"<-["; for(k=0;k<lc.size();k++) s+=lc.get(k).getOwner().getNumberString()+" "; s+="]"; }
+    if (b instanceof ContactBlock) s+=" src="+b.getReferencedOutConnector().getOwner().getNumberString();
+    print("  blk "+b.getClass().getName().replace("DE.siemens.ad.","")+" #"+b.getNumberString()+s); }
+}
+figList(d) { v = new Vector(); fe = d.figures(); while (fe.hasMoreElements()) v.add(fe.nextElement()); return v; }
+clearDrawing(d) {
+  v = figList(d);
+  for (i=0;i<v.size();i++) { f=v.get(i); if (f instanceof DE.siemens.ad.kop.figures.LeftPowerRailFigure) continue;
+     c=f.getConstraint(); if (c==null) { print("no constraint "+f); continue; } c=c.getTopLevelConstraint(); if (!c.isDeleted()) c.delete(); }
+}
+wdBlocks(d) { s=""; bl=d.getWiringDiagram().getBlocks(); for(i=0;i<bl.size();i++) s+=bl.get(i).getClass().getName().replaceAll(".*[.]","")+":"+bl.get(i).getNumberString()+" "; return s; }
+
+// --- builder ---
+contact(d, name, x, y, neg) {
+  wd = d.getWiringDiagram(); src = wd.getContactSourceBlock(name);
+  b = neg ? new NegativContactBlock(wd, src) : new ContactBlock(wd, src);
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d); return f;
+}
+coil(d, name, x, y) {
+  wd = d.getWiringDiagram(); b = new CoilBlock(wd); b.setReferencedOutputBlock(wd.getBinaryOutputBlock(name));
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d); return f;
+}
+wire(d, from, to) {
+  tb = to.getBlock(); ti = to.getInputIfcFigure(tb.getInConnector(0)); eb = ti.displayBox();
+  ex = eb.x; ey = eb.y;
+  if (from == null) { sf = d.getLeftPowerRailFigure(); sx = 24; sy = ey; }
+  else { sf = from.getOutputIfcFigure(from.getBlock().getOutConnector(0)); sb = sf.displayBox(); sx = sb.x + sb.width; sy = sb.y; }
+  c = new FixedElbowConnection();
+  mx = (from == null) ? (sx + ex)/2 : ex - 30;
+  c.addPoint(sx, sy); c.addPoint(mx, sy); c.addPoint(mx, ey); c.addPoint(ex, ey);
+  // drop the two default points created by the constructor
+  while (c.pointCount() > 4) c.removePointAt(0);
+  c.connectStart(sf.connectorAt(sx, sy)); c.connectEnd(ti.connectorAt(ex, ey));
+  c.getConstraint().insert(d); return c;
+}
+onDelay(d, x, y, secs) {
+  wd = d.getWiringDiagram(); b = DE.siemens.ad.logo.model.Block.createInstanceForName("DE.siemens.ad.logo.model.block.OnDelayBlock", wd);
+
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d);
+  p = b.getParameter(); pt = p.getParamTime(); tu = pt.getCurrentValue(); tu.setTime(secs, 0); pt.setCurrentValue(tu); p.setParamTime(pt); p.setTimer(new DE.siemens.ad.logo.model.Timer(tu)); ptf = f.getParameterTextFigure(); if (ptf != null) ptf.setText(p.getParameterText());
+
+  return f;
+}
+comment(d, text, x, y) {
+  c = new DE.siemens.ad.pdraw.figures.CommentTextFigure(); c.setText(text);
+  r = c.displayBox(); c.moveBy(x - r.x, y - r.y); c.getConstraint().insert(d); return c;
+}
+getF(o, cls, name) { f = Class.forName(cls).getDeclaredField(name); f.setAccessible(true); return f.get(o); }
+setF(o, cls, name, val) { f = Class.forName(cls).getDeclaredField(name); f.setAccessible(true); f.set(o, val); }
+sfb(d, cls, x, y) {
+  wd = d.getWiringDiagram(); b = DE.siemens.ad.logo.model.Block.createInstanceForName("DE.siemens.ad.logo.model.block."+cls, wd);
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d); return f;
+}
+wireIn(d, from, to, idx) {
+  tb = to.getBlock(); ti = to.getInputIfcFigure(tb.getInConnector(idx)); eb = ti.displayBox();
+  ex = eb.x; ey = eb.y;
+  if (from == null) { sf = d.getLeftPowerRailFigure(); sx = 24; sy = ey; }
+  else { sf = from.getOutputIfcFigure(from.getBlock().getOutConnector(0)); sb = sf.displayBox(); sx = sb.x + sb.width; sy = sb.y; }
+  c = new FixedElbowConnection();
+  mx = (from == null) ? (sx + ex)/2 : ex - 15 - 10*idx;
+  c.addPoint(sx, sy); c.addPoint(mx, sy); c.addPoint(mx, ey); c.addPoint(ex, ey);
+  c.connectStart(sf.connectorAt(sx, sy)); c.connectEnd(ti.connectorAt(ex, ey));
+  c.getConstraint().insert(d); return c;
+}
+anaContact(d, name, x, y) {
+  wd = d.getWiringDiagram(); b = new DE.siemens.ad.kop.model.block.AnalogContactBlock(wd, wd.getContactSourceBlock(name));
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d); return f;
+}
+refreshParam(f) { p = f.getBlock().getParameter(); ptf = f.getParameterTextFigure(); if (ptf != null) ptf.setText(p.getParameterText()); }

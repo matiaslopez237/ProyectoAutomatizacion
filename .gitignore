@@ -1,0 +1,12 @@
+# Se sube solo lo del proyecto; el resto de la carpeta (instaladores, programas) queda afuera.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/.github/
+!/simulador-logo/
+!/Ejercicios/
+!/generador-lld/
+
+# la guía de la cátedra no se publica
+Ejercicios/**/*.pdf

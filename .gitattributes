@@ -1,0 +1,4 @@
+* text=auto
+# los .lld son objetos Java serializados: nunca convertir finales de línea
+*.lld binary
+*.sh text eol=lf

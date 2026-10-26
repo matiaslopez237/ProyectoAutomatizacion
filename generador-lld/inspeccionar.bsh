@@ -1,0 +1,24 @@
+import java.io.*;
+import java.util.*;
+lp = new Properties(); lp.load(new FileInputStream(System.getProperty("logo.dir")+"/Start.lax"));
+for (e = lp.propertyNames(); e.hasMoreElements();) { k=e.nextElement(); System.setProperty(k, lp.getProperty(k)); }
+in = new ObjectInputStream(new FileInputStream(bsh.args[0]));
+print("hdr "+in.readInt()+" "+in.readInt()+" "+in.readInt()+" n="+in.readInt());
+figs = new ArrayList(); d=null;
+try { while(true){ o=in.readObject(); if (o instanceof DE.siemens.ad.pdraw.standard.LogoDrawing) d=o; else figs.add(o);} } catch(EOFException e){}
+desc(f) {
+  if (f==null) return "null";
+  if (f instanceof DE.siemens.ad.pdraw.figures.BlockFigure) { b=f.getBlock(); return b.getClass().getName().replace("DE.siemens.ad.","")+"#"+b.getNumberString()+" name="+b.getUserDefinedName()+" box="+f.displayBox(); }
+  return f.getClass().getName().replace("DE.siemens.ad.","")+"@"+System.identityHashCode(f);
+}
+print("figs in file: "+figs.size());
+for (i=0;i<figs.size();i++){ f=figs.get(i);
+  if (f instanceof CH.ifa.draw.figures.LineConnection) {
+     s=f.start(); e=f.end();
+     print(i+" CONN "+s.getClass().getName().replace("DE.siemens.ad.","")+"("+desc(s.owner())+") -> "+e.getClass().getName().replace("DE.siemens.ad.","")+"("+desc(e.owner())+") pts="+f.points());
+  } else print(i+" "+desc(f));
+}
+wd = d.getWiringDiagram(); print("WD "+wd.getClass()+" hw="+wd.getHardware());
+bl = wd.getCopyOfBlocks(); for (i=0;i<bl.length;i++){ b=bl[i]; if(b==null) continue; s=""; 
+  ins=b.getInConnectors(); if(ins!=null) for(j=0;j<ins.length;j++){ p=ins[j].getPreviousConnector(); s+=" in"+j+"<-"+(p==null?"-":p.getOwner().getNumberString()); }
+  print("  blk "+b.getClass().getName().replace("DE.siemens.ad.","")+" #"+b.getNumberString()+s); }

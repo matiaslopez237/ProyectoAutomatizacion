@@ -1,0 +1,85 @@
+source(System.getProperty("gen.dir")+"/lib.bsh");
+OUT = System.getProperty("repo.dir")+"/Ejercicios/Nuevos/";
+TEMPLATE = System.getProperty("repo.dir")+"/Ejercicios/EJ autoatizacion.lld";
+X0 = 140; DX = 110; XC = 760;
+fresh() { dd = loadDrawing(TEMPLATE); clearDrawing(dd); return dd; }
+C(d, name, x, y, neg, label) { f = contact(d, name, x, y, neg); if (label != null) comment(d, label, x - 12, y - 30); return f; }
+Q(d, name, y, label) { f = coil(d, name, XC, y); if (label != null) comment(d, label, XC - 12, y - 30); return f; }
+header(d, lines) { for (i=0;i<lines.length;i++) comment(d, lines[i], 60, 10 + i*16); }
+done(d, file) { saveDrawing(d, OUT + file); print("== " + file); dumpModel(loadDrawing(OUT + file)); }
+
+// ---------- Ej1 ----------
+d = fresh();
+header(d, new String[]{"Ej 1 - Arranque y parada de motor con enclavamiento, rele termico y pilotos",
+  "I1 marcha (NA) | I2 parada (NC) | I3 rele termico (NC) | Q1 motor | Q2 piloto marcha | Q3 piloto falla termica"});
+q = Q(d,"Q1",140,"motor"); l = Q(d,"Q2",300,"piloto marcha"); f = Q(d,"Q3",390,"piloto falla");
+y = 140;
+a = C(d,"I1",X0,y,false,"marcha"); s = C(d,"Q1",X0,y+70,false,"autoret.");
+p = C(d,"I2",X0+2*DX,y,true,"parada"); t = C(d,"I3",X0+3*DX,y,true,"termico");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,q);
+m = C(d,"Q1",X0,300,false,"motor"); wire(d,null,m); wire(d,m,l);
+th = C(d,"I3",X0,390,false,"termico"); wire(d,null,th); wire(d,th,f);
+done(d, "Ej1 Arranque-parada motor con pilotos.lld");
+
+// ---------- Ej2 ----------
+d = fresh();
+header(d, new String[]{"Ej 2 - Inversion de giro con enclavamiento mutuo",
+  "I1 giro derecha (NA) | I2 giro izquierda (NA) | I3 parada (NC) | Q1 contactor derecha | Q2 contactor izquierda"});
+q1 = Q(d,"Q1",140,"giro derecha"); q2 = Q(d,"Q2",320,"giro izquierda");
+y = 140;
+a = C(d,"I1",X0,y,false,"derecha"); s = C(d,"Q1",X0,y+70,false,"autoret.");
+p = C(d,"I3",X0+2*DX,y,true,"parada"); e = C(d,"Q2",X0+3*DX,y,true,"bloqueo izq");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,e); wire(d,e,q1);
+y = 320;
+a = C(d,"I2",X0,y,false,"izquierda"); s = C(d,"Q2",X0,y+70,false,"autoret.");
+p = C(d,"I3",X0+2*DX,y,true,"parada"); e = C(d,"Q1",X0+3*DX,y,true,"bloqueo der");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,e); wire(d,e,q2);
+done(d, "Ej2 Inversion de giro.lld");
+
+// ---------- Ej3 ----------
+d = fresh();
+header(d, new String[]{"Ej 3 - Arranque estrella-triangulo (T001 = 5 s)",
+  "I1 marcha (NA) | I2 parada (NC) | I3 termico (NC) | Q1 contactor linea | Q2 estrella | Q3 triangulo"});
+m1 = Q(d,"M1",140,"marcha"); l = Q(d,"Q1",300,"linea"); qy = Q(d,"Q2",500,"estrella"); qd = Q(d,"Q3",590,"triangulo");
+y = 140;
+a = C(d,"I1",X0,y,false,"marcha"); s = C(d,"M1",X0,y+70,false,"autoret.");
+p = C(d,"I2",X0+2*DX,y,true,"parada"); t = C(d,"I3",X0+3*DX,y,true,"termico");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,t); wire(d,t,m1);
+c = C(d,"M1",X0,300,false,"marcha"); wire(d,null,c); wire(d,c,l);
+y = 390; c = C(d,"M1",X0,y,false,"marcha"); tm = onDelay(d, XC - 50, y + 10, 5); comment(d,"tiempo estrella",XC,y-10); wire(d,null,c); wire(d,c,tm);
+T = tm.getBlock().getNumberString();
+y = 500; c = C(d,"M1",X0,y,false,"marcha"); n = C(d,T,X0+DX,y,true,"fin estrella"); b = C(d,"Q3",X0+2*DX,y,true,"bloqueo tri");
+wire(d,null,c); wire(d,c,n); wire(d,n,b); wire(d,b,qy);
+y = 590; c = C(d,"M1",X0,y,false,"marcha"); n = C(d,T,X0+DX,y,false,"fin estrella"); b = C(d,"Q2",X0+2*DX,y,true,"bloqueo est");
+wire(d,null,c); wire(d,c,n); wire(d,n,b); wire(d,b,qd);
+done(d, "Ej3 Arranque estrella-triangulo.lld");
+
+// ---------- Ej4 ----------
+d = fresh();
+header(d, new String[]{"Ej 4 - Arranque secuencial de 3 cintas transportadoras (5 s entre cada una)",
+  "I1 marcha (NA) | I2 parada (NC) | Q1 cinta 1 | Q2 cinta 2 | Q3 cinta 3"});
+m1 = Q(d,"M1",140,"sistema en marcha"); l1 = Q(d,"Q1",300,"cinta 1"); l2 = Q(d,"Q2",500,"cinta 2"); l3 = Q(d,"Q3",700,"cinta 3");
+y = 140;
+a = C(d,"I1",X0,y,false,"marcha"); s = C(d,"M1",X0,y+70,false,"autoret.");
+p = C(d,"I2",X0+2*DX,y,true,"parada");
+wire(d,null,a); wire(d,null,s); wire(d,a,p); wire(d,s,p); wire(d,p,m1);
+c = C(d,"M1",X0,300,false,"marcha"); wire(d,null,c); wire(d,c,l1);
+y = 390; c = C(d,"M1",X0,y,false,"marcha"); t1 = onDelay(d, XC - 50, y + 10, 5); wire(d,null,c); wire(d,c,t1);
+T1 = t1.getBlock().getNumberString();
+c = C(d,T1,X0,500,false,"5 s"); wire(d,null,c); wire(d,c,l2);
+y = 590; c = C(d,T1,X0,y,false,"5 s"); t2 = onDelay(d, XC - 50, y + 10, 5); wire(d,null,c); wire(d,c,t2);
+T2 = t2.getBlock().getNumberString();
+c = C(d,T2,X0,700,false,"10 s"); wire(d,null,c); wire(d,c,l3);
+done(d, "Ej4 Arranque secuencial 3 cintas.lld");
+
+// ---------- Ej5 ----------
+d = fresh();
+header(d, new String[]{"Ej 5 - Control automatico de nivel de un tanque",
+  "I1 sensor nivel bajo (1 = agua bajo minimo) | I2 sensor nivel alto (1 = lleno) | I3 selector automatico | Q1 bomba | Q2 piloto lleno"});
+q = Q(d,"Q1",140,"bomba"); l = Q(d,"Q2",300,"tanque lleno");
+y = 140;
+a = C(d,"I1",X0,y,false,"nivel bajo"); s = C(d,"Q1",X0,y+70,false,"autoret.");
+h = C(d,"I2",X0+2*DX,y,true,"nivel alto"); sel = C(d,"I3",X0+3*DX,y,false,"automatico");
+wire(d,null,a); wire(d,null,s); wire(d,a,h); wire(d,s,h); wire(d,h,sel); wire(d,sel,q);
+c = C(d,"I2",X0,300,false,"nivel alto"); wire(d,null,c); wire(d,c,l);
+done(d, "Ej5 Control de nivel de tanque.lld");
