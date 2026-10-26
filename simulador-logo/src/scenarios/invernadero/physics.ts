@@ -15,8 +15,20 @@ export interface GreenhouseState {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
+export const SUNRISE = 6.5
+export const SUNSET = 20
+
+/** Fracción de luz del día según la hora (0 de noche, 1 al mediodía solar). */
+export function daylight(hour: number): number {
+  if (hour <= SUNRISE || hour >= SUNSET) return 0
+  return Math.sin((Math.PI * (hour - SUNRISE)) / (SUNSET - SUNRISE))
+}
+
+/** Radiación solar actual en %: el máximo del slider escalado por la hora. */
+export const sunNow = (p: Record<string, number>) => p.sun * daylight(p.hour ?? 13)
+
 export function initGreenhouse(p: Record<string, number>): GreenhouseState {
-  return { temp: p.tempExt + (p.sun / 100) * 8, rh: p.rhExt, soil: 55, health: 1, windowOpen: 0 }
+  return { temp: p.tempExt + (sunNow(p) / 100) * 8, rh: p.rhExt, soil: 55, health: 1, windowOpen: 0 }
 }
 
 export function stepGreenhouse(
@@ -26,7 +38,7 @@ export function stepGreenhouse(
   d: Record<string, boolean>,
   dt: number,
 ): GreenhouseState {
-  const sun = p.sun / 100
+  const sun = sunNow(p) / 100
   const wind = p.wind / 100
   const rain = !!d.I4
 

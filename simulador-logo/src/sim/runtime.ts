@@ -38,17 +38,27 @@ function tick() {
   let phys = st.sim.phys
   let plc = st.sim.plc
   let result = st.sim.result
+  // reloj del día: avanza con el tiempo simulado y se detiene al llegar al máximo (medianoche)
+  const clock = st.clockOn ? scenario.sliders.find((s) => s.clock) : undefined
+  let params = st.params
+  let clockOn = st.clockOn
   for (let i = 0; i < steps; i++) {
+    if (clock) {
+      const next = params[clock.key] + dt / 3600
+      if (next >= clock.max) clockOn = false
+      params = { ...params, [clock.key]: Math.min(clock.max, next) }
+    }
     const inputs: PlcInputs = { bin: { ...st.digital }, ana: {} }
     for (const s of scenario.sensors) {
-      const raw = Math.round(s.read(phys, st.params) * s.scale)
+      const raw = Math.round(s.read(phys, params) * s.scale)
       inputs.ana[s.op] = Math.min(1000, Math.max(0, raw))
     }
     if (st.running) {
       result = scan(st.circuit, plc, inputs, dt)
       plc = result.state
     }
-    phys = scenario.step(phys, st.running && result ? result.outputs : {}, st.params, st.digital, dt)
+    phys = scenario.step(phys, st.running && result ? result.outputs : {}, params, st.digital, dt)
+    if (clock && !clockOn) break
   }
 
   const t = st.sim.t + total
@@ -59,10 +69,12 @@ function tick() {
     history = { ...history }
     for (const s of scenario.sensors) {
       const arr = history[s.op] ? history[s.op].slice(-(HISTORY_LEN - 1)) : []
-      arr.push(s.read(phys, st.params))
+      arr.push(s.read(phys, params))
       history[s.op] = arr
     }
   }
 
-  useStore.setState({ sim: { result: st.running ? result : null, plc, phys, t, history } })
+  const sim = { result: st.running ? result : null, plc, phys, t, history }
+  if (clock) useStore.setState({ sim, params, clockOn })
+  else useStore.setState({ sim })
 }

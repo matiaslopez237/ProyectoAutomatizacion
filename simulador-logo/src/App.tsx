@@ -122,7 +122,7 @@ export default function App() {
           <label className="appbar-field">
             <span>Velocidad</span>
             <select id="speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
-              {[1, 5, 20, 60].map((v) => (
+              {[1, 5, 20, 60, 300].map((v) => (
                 <option key={v} value={v}>
                   ×{v}
                 </option>

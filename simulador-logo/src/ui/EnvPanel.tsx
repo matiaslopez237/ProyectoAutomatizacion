@@ -3,6 +3,10 @@ import type { SensorDef } from '../scenarios/types'
 import { useStore } from '../store'
 
 const fmt = (v: number, d = 1) => v.toFixed(d).replace('.', ',')
+const fmtHour = (h: number) => {
+  const total = Math.round(h * 60)
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
 
 function Sparkline({ data, min, max }: { data: number[]; min: number; max: number }) {
   const W = 120
@@ -50,8 +54,9 @@ export function EnvPanel() {
   const params = useStore((s) => s.params)
   const digital = useStore((s) => s.digital)
   const outputs = useStore((s) => s.sim.result?.outputs)
+  const clockOn = useStore((s) => s.clockOn)
   const sc = getScenario(scenarioId)
-  const { setParam, setDigital } = useStore.getState()
+  const { setParam, setDigital, setClockOn } = useStore.getState()
 
   return (
     <div className="env">
@@ -62,7 +67,7 @@ export function EnvPanel() {
             <label htmlFor={`sl-${sl.key}`}>
               <span>{sl.label}</span>
               <output htmlFor={`sl-${sl.key}`}>
-                {fmt(params[sl.key], sl.step < 1 ? 1 : 0)} {sl.unit}
+                {sl.format === 'time' ? (params[sl.key] >= 24 ? '24:00' : fmtHour(params[sl.key])) : `${fmt(params[sl.key], sl.step < 1 ? 1 : 0)} ${sl.unit}`}
               </output>
             </label>
             <input
@@ -74,6 +79,20 @@ export function EnvPanel() {
               value={params[sl.key]}
               onChange={(e) => setParam(sl.key, Number(e.target.value))}
             />
+            {sl.clock && (
+              <div className="clock">
+                <button
+                  type="button"
+                  className={`btn btn-small${clockOn ? ' is-on' : ''}`}
+                  aria-pressed={clockOn}
+                  disabled={!clockOn && params[sl.key] >= sl.max}
+                  onClick={() => setClockOn(!clockOn)}
+                >
+                  {clockOn ? '❚❚ Pausar el reloj' : '▶ Avanzar hasta medianoche'}
+                </button>
+                <small>{clockOn ? 'Avanza con la velocidad de simulación.' : params[sl.key] >= sl.max ? 'Llegó a medianoche: mové el slider para seguir.' : 'Desde la hora del slider.'}</small>
+              </div>
+            )}
           </div>
         ))}
       </section>

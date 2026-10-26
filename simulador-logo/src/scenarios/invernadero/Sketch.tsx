@@ -1,5 +1,5 @@
 import type { SketchProps } from '../types'
-import type { GreenhouseState } from './physics'
+import { daylight, SUNRISE, SUNSET, sunNow, type GreenhouseState } from './physics'
 import './sketch.css'
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
@@ -27,8 +27,17 @@ function Tag({ x, y, op, label, on, anchor = 'start' }: { x: number; y: number; 
 }
 
 export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchProps<GreenhouseState>) {
-  const sun = params.sun / 100
+  const sun = sunNow(params) / 100
+  const hour = params.hour ?? 13
+  const day = daylight(hour)
   const rain = !!digital.I4
+  // el sol recorre un arco de este a oeste entre la salida y la puesta; la luna hace lo mismo de noche
+  const isDay = hour > SUNRISE && hour < SUNSET
+  const nightLen = 24 - (SUNSET - SUNRISE)
+  const arc = isDay ? (hour - SUNRISE) / (SUNSET - SUNRISE) : (((hour - SUNSET + 24) % 24) / nightLen)
+  const bodyX = 30 + arc * 500
+  const bodyY = 175 - Math.sin(Math.PI * arc) * 140
+  const twilight = Math.max(0, 1 - Math.min(Math.abs(hour - SUNRISE), Math.abs(hour - SUNSET)) / 1.2)
   const hot = clamp01((state.temp - 26) / 18)
   const cold = clamp01((14 - state.temp) / 14)
   const wet = state.soil / 100
@@ -50,8 +59,23 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
       </defs>
 
       {/* cielo y sol */}
-      <rect width="560" height="420" fill={mix('1c2944', rain ? '8ea3b5' : '9ed2ef', sun)} />
-      <circle cx="470" cy={150 - sun * 100} r="26" fill="#ffd75e" opacity={sun > 0.05 ? 0.4 + sun * 0.6 : 0} />
+      <rect width="560" height="420" fill={mix('101a30', rain ? '8ea3b5' : '9ed2ef', Math.min(1, day * 1.4))} />
+      <rect width="560" height="200" fill="#ff9a52" opacity={twilight * 0.35} />
+      {!isDay && (
+        <g opacity={1 - twilight}>
+          {Array.from({ length: 28 }, (_, i) => (
+            <circle key={i} cx={(i * 97 + 13) % 560} cy={(i * 41 + 7) % 150} r={i % 3 ? 0.9 : 1.4} fill="#f4f1d8" />
+          ))}
+        </g>
+      )}
+      {isDay ? (
+        <circle cx={bodyX} cy={bodyY} r="24" fill={mix('ff8c42', 'ffd75e', day)} opacity={rain ? 0.45 : 0.95} />
+      ) : (
+        <g transform={`translate(${bodyX} ${bodyY})`}>
+          <circle r="15" fill="#e9ecf2" />
+          <circle cx="7" cy="-4" r="13" fill={mix('101a30', '9ed2ef', day)} />
+        </g>
+      )}
       {rain && (
         <g className="gh-rain">
           {Array.from({ length: 36 }, (_, i) => (
@@ -170,11 +194,14 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
 
       {/* lectura rápida */}
       <g className="gh-readout" transform="translate(12 12)">
-        <rect width="196" height="54" rx="4" />
+        <rect width="210" height="72" rx="4" />
         <text x="10" y="20">
-          Interior {state.temp.toFixed(1).replace('.', ',')} °C · HR {Math.round(state.rh)} %
+          {String(Math.floor(hour) % 24).padStart(2, '0')}:{String(Math.round((hour % 1) * 60) % 60).padStart(2, '0')} h · Sol {Math.round(sun * 100)} %
         </text>
         <text x="10" y="40">
+          Interior {state.temp.toFixed(1).replace('.', ',')} °C · HR {Math.round(state.rh)} %
+        </text>
+        <text x="10" y="60">
           Suelo {Math.round(state.soil)} % · Plantas {Math.round(h * 100)} %
         </text>
       </g>

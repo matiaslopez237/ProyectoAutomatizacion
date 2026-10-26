@@ -32,6 +32,8 @@ interface AppState {
   scenarioId: string
   params: Record<string, number>
   digital: Record<string, boolean>
+  /** la hora del día avanza sola con el tiempo simulado */
+  clockOn: boolean
   sim: SimSnapshot
 
   /** guarda una foto del circuito para deshacer y aplica el cambio */
@@ -53,6 +55,7 @@ interface AppState {
   setZoom: (z: number) => void
   setParam: (k: string, v: number) => void
   setDigital: (op: string, v: boolean) => void
+  setClockOn: (on: boolean) => void
   setScenario: (id: string) => void
   loadCircuit: (c: Circuit) => void
   resetProcess: () => void
@@ -104,6 +107,7 @@ export const useStore = create<AppState>((set, get) => ({
   scenarioId: initialScenario,
   params: initDefaults.params,
   digital: initDefaults.digital,
+  clockOn: false,
   sim: freshSim(initDefaults.phys),
 
   commit: (fn) => set((s) => ({ past: [...s.past.slice(-60), snap(s.circuit)], future: [], circuit: fn(snap(s.circuit)) })),
@@ -169,9 +173,10 @@ export const useStore = create<AppState>((set, get) => ({
   setZoom: (zoom) => set({ zoom: Math.min(2, Math.max(0.5, zoom)) }),
   setParam: (k, v) => set((s) => ({ params: { ...s.params, [k]: v } })),
   setDigital: (op, v) => set((s) => ({ digital: { ...s.digital, [op]: v } })),
+  setClockOn: (clockOn) => set({ clockOn }),
   setScenario: (id) => {
     const d = scenarioDefaults(id)
-    set({ scenarioId: id, params: d.params, digital: d.digital, sim: freshSim(d.phys), circuit: getScenario(id).example(), past: [], future: [], selection: null })
+    set({ scenarioId: id, params: d.params, digital: d.digital, clockOn: false, sim: freshSim(d.phys), circuit: getScenario(id).example(), past: [], future: [], selection: null })
   },
   loadCircuit: (circuit) => {
     get().commit(() => circuit)

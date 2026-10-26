@@ -1,6 +1,6 @@
 import type { Scenario } from '../types'
 import { greenhouseExample } from './example'
-import { initGreenhouse, stepGreenhouse, type GreenhouseState } from './physics'
+import { initGreenhouse, stepGreenhouse, sunNow, type GreenhouseState } from './physics'
 import { GreenhouseSketch } from './Sketch'
 
 export const invernadero: Scenario<GreenhouseState> = {
@@ -10,7 +10,8 @@ export const invernadero: Scenario<GreenhouseState> = {
   sliders: [
     { key: 'tempExt', label: 'Temperatura exterior', unit: '°C', min: -5, max: 42, step: 0.5, default: 24 },
     { key: 'rhExt', label: 'Humedad relativa exterior', unit: '%', min: 10, max: 100, step: 1, default: 45 },
-    { key: 'sun', label: 'Radiación solar', unit: '%', min: 0, max: 100, step: 1, default: 70 },
+    { key: 'hour', label: 'Hora del día', unit: 'h', min: 0, max: 24, step: 0.25, default: 13, format: 'time', clock: true },
+    { key: 'sun', label: 'Radiación solar máxima (cielo despejado)', unit: '%', min: 0, max: 100, step: 1, default: 75 },
     { key: 'wind', label: 'Viento', unit: '%', min: 0, max: 100, step: 1, default: 20 },
     { key: 'evap', label: 'Consumo de agua del cultivo', unit: '×', min: 0.2, max: 3, step: 0.1, default: 1 },
   ],
@@ -24,7 +25,7 @@ export const invernadero: Scenario<GreenhouseState> = {
     { op: 'AI1', label: 'Temperatura interior', unit: '°C', min: 0, max: 50, scale: 10, read: (s) => s.temp },
     { op: 'AI2', label: 'Humedad del aire', unit: '%', min: 0, max: 100, scale: 10, read: (s) => s.rh },
     { op: 'AI3', label: 'Humedad del suelo', unit: '%', min: 0, max: 100, scale: 10, read: (s) => s.soil },
-    { op: 'AI4', label: 'Luz solar', unit: '%', min: 0, max: 100, scale: 10, read: (_s, p) => p.sun },
+    { op: 'AI4', label: 'Luz solar', unit: '%', min: 0, max: 100, scale: 10, read: (_s, p) => sunNow(p) },
   ],
   outputs: [
     { op: 'Q1', label: 'Aspersor de riego' },

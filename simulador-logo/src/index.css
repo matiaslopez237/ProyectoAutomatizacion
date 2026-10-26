@@ -208,6 +208,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .slider label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
 .slider output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg); white-space: nowrap; }
 .slider input[type='range'] { width: 100%; accent-color: var(--accent); }
+.clock { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; }
+.clock small { font-size: 11px; color: var(--muted); }
+.btn-small { padding: 3px 9px; font-size: 12px; }
+.btn.is-on { border-color: var(--accent); color: var(--accent); }
 
 .inputs, .sensors, .outputs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .switch { display: grid; grid-template-columns: 38px 34px 1fr; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }

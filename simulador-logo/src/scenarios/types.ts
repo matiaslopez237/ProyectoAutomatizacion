@@ -10,6 +10,10 @@ export interface SliderDef {
   max: number
   step: number
   default: number
+  /** se muestra como hora (14,5 → 14:30) */
+  format?: 'time'
+  /** puede avanzar sola con el tiempo simulado (1 unidad = 1 hora) hasta llegar al máximo */
+  clock?: boolean
 }
 
 /** Entrada digital que el usuario acciona desde el panel (selector, pulsador, sensor simulado) */
