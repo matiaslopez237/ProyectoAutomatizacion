@@ -57,6 +57,16 @@ export const BLOCK_DEFS: Record<BlockType, BlockDef> = {
     ],
     defaults: { On: 10, Off: 10 },
   },
+  WEEK: {
+    type: 'WEEK', name: 'Temporizador semanal', pins: [], fbPrefix: 'SF', group: 'timer',
+    params: [
+      { key: 'on1', label: 'Leva 1: conexión', step: 0.25, min: 0, max: 24, unit: 'h' },
+      { key: 'off1', label: 'Leva 1: desconexión', step: 0.25, min: 0, max: 24, unit: 'h' },
+      { key: 'on2', label: 'Leva 2: conexión', step: 0.25, min: 0, max: 24, unit: 'h' },
+      { key: 'off2', label: 'Leva 2: desconexión', step: 0.25, min: 0, max: 24, unit: 'h' },
+    ],
+    defaults: { on1: 7, off1: 9, on2: 0, off2: 0 },
+  },
   RS: { type: 'RS', name: 'Relé autoenclavador', pins: ['S', 'R'], fbPrefix: 'SF', group: 'misc' },
   ATRIG: {
     type: 'ATRIG', name: 'Conmutador analógico de valor umbral', pins: ['Ax'], fbPrefix: 'SF', group: 'analog',

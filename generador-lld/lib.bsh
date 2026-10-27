@@ -14,6 +14,7 @@ loadDrawing(path) {
 }
 
 saveDrawing(d, path) {
+  pg = fitPages(d); print("  hojas: " + pg[0] + " x " + pg[1] + " (hoja " + pg[2] + "x" + pg[3] + ")");
   out = new ObjectOutputStream(new FileOutputStream(path));
   out.writeInt(7); out.writeInt(0); out.writeInt(100);
   v = new Vector(); fe = d.figures(); while (fe.hasMoreElements()) v.add(fe.nextElement());
@@ -100,3 +101,40 @@ anaContact(d, name, x, y) {
   f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d); return f;
 }
 refreshParam(f) { p = f.getBlock().getParameter(); ptf = f.getParameterTextFigure(); if (ptf != null) ptf.setText(p.getParameterText()); }
+
+// --- temporizador con unidad elegible: "s" segundos (ss:hh), "m" minutos (mm:ss), "h" horas (hh:mm)
+timer(d, cls, x, y, high, low, unit) {
+  wd = d.getWiringDiagram();
+  b = DE.siemens.ad.logo.model.Block.createInstanceForName("DE.siemens.ad.logo.model.block."+cls, wd);
+  f = new BlockFigure(b, new Point(x, y)); f.getConstraint().insert(d);
+  p = b.getParameter(); pt = p.getParamTime(); units = pt.getAvailableTimeUnits(); tu = null;
+  for (i=0;i<units.length;i++) if (units[i].getUnitAbbreviation().equals(unit)) tu = units[i].clone();
+  if (tu == null) tu = pt.getCurrentValue();
+  tu.setTime(high, low); pt.setCurrentValue(tu); p.setParamTime(pt); p.setTimer(new DE.siemens.ad.logo.model.Timer(tu));
+  ptf = f.getParameterTextFigure(); if (ptf != null) ptf.setText(p.getParameterText());
+  return f;
+}
+
+// --- temporizador semanal: levas = { {hOn, mOn, hOff, mOff}, ... } todos los días (lunes a domingo)
+weekly(d, x, y, cams) {
+  f = sfb(d, "ClockBlock", x, y); p = f.getBlock().getParameter();
+  for (i=0;i<cams.length && i<p.getCamCount();i++) {
+    c = p.getCam(i); c.setMode(9);
+    on = new DE.siemens.ad.logo.model.ClockHours(); on.setTime(cams[i][0], cams[i][1]); on.setInactive(false); c.setOnTime(on);
+    off = new DE.siemens.ad.logo.model.ClockHours(); off.setTime(cams[i][2], cams[i][3]); off.setInactive(false); c.setOffTime(off);
+  }
+  refreshParam(f);
+  return f;
+}
+
+// Ajusta la cantidad de hojas del dibujo para que entre todo el programa (LOGO!Soft no muestra lo que queda fuera).
+fitPages(d) {
+  maxX = 0; maxY = 0;
+  fe = d.figures(); while (fe.hasMoreElements()) { r = fe.nextElement().displayBox(); if (r.height > 5000) continue; maxX = Math.max(maxX, r.x + r.width); maxY = Math.max(maxY, r.y + r.height); }
+  dim = d.getPageDimension();
+  props = getF(d.getWiringDiagram(), "DE.siemens.ad.logo.model.WiringDiagram", "fDrawingProperties");
+  props.setPagesHorizontal(Math.max(1, (int) Math.ceil((maxX + 40.0) / dim.width)));
+  props.setPagesVertical(Math.max(1, (int) Math.ceil((maxY + 40.0) / dim.height)));
+  try { d.changeViewSize(); } catch (Exception e) {}
+  return new int[]{ props.getPagesHorizontal(), props.getPagesVertical(), dim.width, dim.height };
+}

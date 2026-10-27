@@ -48,7 +48,8 @@ function tick() {
       if (next >= clock.max) clockOn = false
       params = { ...params, [clock.key]: Math.min(clock.max, next) }
     }
-    const inputs: PlcInputs = { bin: { ...st.digital }, ana: {} }
+    const clockKey = scenario.sliders.find((s) => s.clock)?.key
+    const inputs: PlcInputs = { bin: { ...st.digital }, ana: {}, hour: clockKey ? params[clockKey] : undefined }
     for (const s of scenario.sensors) {
       const raw = Math.round(s.read(phys, params) * s.scale)
       inputs.ana[s.op] = Math.min(1000, Math.max(0, raw))

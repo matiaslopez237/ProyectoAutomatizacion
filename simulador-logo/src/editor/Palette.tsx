@@ -9,7 +9,7 @@ const TREE: { title: string; groups: { title?: string; items: BlockType[] }[] }[
   {
     title: 'Funciones especiales',
     groups: [
-      { title: 'Temporizadores', items: ['TON', 'TOF'] },
+      { title: 'Temporizadores', items: ['TON', 'TOF', 'WEEK'] },
       { title: 'Contadores', items: ['CTR'] },
       { title: 'Analógico', items: ['ATRIG', 'ACMP'] },
       { title: 'Varios', items: ['RS'] },

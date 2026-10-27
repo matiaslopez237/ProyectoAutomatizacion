@@ -144,6 +144,22 @@ describe('funciones especiales (TP3 y TP4)', () => {
   })
 })
 
+describe('temporizador semanal', () => {
+  it('activa la salida dentro de cada leva, incluso si cruza la medianoche', () => {
+    const b = new CircuitBuilder()
+    const w = b.add('WEEK', 400, 20, undefined, undefined, { on1: 7, off1: 9, on2: 23, off2: 1 })
+    const c = b.build()
+    const at = (hour: number) => scan(c, emptyPlcState(), { bin: {}, ana: {}, hour }, 0.1).state.image[w.op]
+    expect(at(6.9)).toBe(false)
+    expect(at(7)).toBe(true)
+    expect(at(8.99)).toBe(true)
+    expect(at(9)).toBe(false)
+    expect(at(23.5)).toBe(true)
+    expect(at(0.5)).toBe(true)
+    expect(at(1)).toBe(false)
+  })
+})
+
 describe('analógico (TP5)', () => {
   it('conmutador de umbral con histéresis', () => {
     const b = new CircuitBuilder()

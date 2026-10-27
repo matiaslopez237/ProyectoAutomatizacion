@@ -1,0 +1,100 @@
+// Programa del invernadero para LOGO!Soft Comfort: mismo circuito que el ejemplo del simulador web
+// (simulador-logo/src/scenarios/invernadero/example.ts). Genera Ejercicios/Proyecto/Invernadero.lld
+source(System.getProperty("gen.dir")+"/lib.bsh");
+OUT = System.getProperty("repo.dir")+"/Ejercicios/Proyecto/";
+TEMPLATE = System.getProperty("repo.dir")+"/Ejercicios/EJ autoatizacion.lld";
+new File(OUT).mkdirs();
+
+C0 = 60; C1 = 160; C2 = 260; C3 = 360; C4 = 460; FB = 580; QX = 760;
+C(d, name, x, y, neg, label) { f = contact(d, name, x, y, neg); if (label != null) comment(d, label, x - 12, y - 30); return f; }
+Q(d, name, y, label) { f = coil(d, name, QX, y); if (label != null) comment(d, label, QX - 12, y - 30); return f; }
+num(f) { return f.getBlock().getNumberString(); }
+lbl(d, f, text) { r = f.displayBox(); comment(d, text, r.x + 60, r.y - 14); }
+atrig(d, ai, y, label, text, on, off) {
+  t = sfb(d, "AnalogTriggerBlock", FB, y); p = t.getBlock().getParameter();
+  p.setGain(10); p.setOnTrigger(on); p.setOffTrigger(off); refreshParam(t); lbl(d, t, text);
+  a = anaContact(d, ai, C0, y); comment(d, label, C0 - 12, y - 30); wireIn(d, null, a, 0); wireIn(d, a, t, 0);
+  return t;
+}
+series(d, figs, target) { wire(d, null, figs[0]); for (i=1;i<figs.length;i++) wire(d, figs[i-1], figs[i]); if (target != null) wire(d, figs[figs.length-1], target); }
+
+d = loadDrawing(TEMPLATE); clearDrawing(d);
+comment(d, "Invernadero automatizado - I1 auto | I2 riego manual | I3 emergencia | I4 lluvia | I5 reconocer", 860, 4);
+
+// salidas primero: sus contactos (Q1, Q2, Q4) se usan en otros escalones
+q1 = Q(d, "Q1", 1090, "aspersor"); q8 = Q(d, "Q8", 1560, "aviso de riego"); q4 = Q(d, "Q4", 1720, "ventana cenital");
+q2 = Q(d, "Q2", 1880, "ventilador"); q3 = Q(d, "Q3", 2040, "calefactor"); q5 = Q(d, "Q5", 2120, "nebulizador");
+q6 = Q(d, "Q6", 2200, "luces de cultivo"); q7 = Q(d, "Q7", 2520, "alarma");
+
+// 1. sensores analógicos -> umbrales con histéresis (ganancia 0,1 -> °C o %)
+soilOk = atrig(d, "AI3", 40, "humedad suelo", "suelo húmedo (>45 %)", 45, 30);
+soilMin = atrig(d, "AI3", 120, "humedad suelo", "suelo >20 %", 20, 15);
+mild = atrig(d, "AI1", 200, "temperatura", "templado (>18 °C)", 18, 15);
+hot = atrig(d, "AI1", 280, "temperatura", "calor (>28 °C)", 28, 25);
+crit = atrig(d, "AI1", 360, "temperatura", "temp. crítica (>38 °C)", 38, 35);
+humid = atrig(d, "AI2", 440, "humedad aire", "aire húmedo (>65 %)", 65, 50);
+sunny = atrig(d, "AI4", 520, "luz solar", "hay sol (>40 %)", 40, 25);
+
+// 2. temporizadores semanales (a la derecha: en LOGO!Soft cada uno muestra sus tres levas y ocupa lugar)
+wRiego = weekly(d, 860, 60, new int[][]{{7,0,9,0},{18,0,20,0}}); lbl(d, wRiego, "horario de riego");
+wLuces = weekly(d, 860, 260, new int[][]{{6,0,22,0}}); lbl(d, wLuces, "luces permitidas");
+wDia = weekly(d, 860, 460, new int[][]{{0,0,0,10}}); lbl(d, wDia, "nuevo día");
+
+// 3. riego
+yR = 860;
+tof = timer(d, "OffDelayBlock", FB, yR + 10, 8, 0, "s"); lbl(d, tof, "riego +8 s");
+falla = sfb(d, "LatchingRelayBlock", FB, 1250); lbl(d, falla, "falla de riego (memoria)");
+auto = C(d, "I1", C0, yR, false, "automático");
+enHorario = C(d, num(wRiego), C1, yR, false, "en horario");
+seco = C(d, num(soilOk), C2, yR, true, "suelo seco");
+muySeco = C(d, num(soilMin), C1, yR + 70, true, "suelo muy seco");
+sinFalla = C(d, num(falla), C3, yR, true, "sin falla");
+manual = C(d, "I2", C0, yR + 140, false, "riego manual");
+parada1 = C(d, "I3", C4, yR, true, "emergencia");
+wire(d, null, auto); wire(d, auto, enHorario); wire(d, enHorario, seco); wire(d, auto, muySeco);
+wire(d, seco, sinFalla); wire(d, muySeco, sinFalla); wire(d, sinFalla, parada1);
+wire(d, null, manual); wire(d, manual, parada1); wire(d, parada1, tof);
+series(d, new Object[]{C(d, num(tof), C0, 1090, false, "regando")}, q1);
+
+// 4. detección de falla: 10 min regando sin que el suelo se humedezca
+tFalla = timer(d, "OnDelayBlock", FB, 1180, 10, 0, "m"); lbl(d, tFalla, "riego continuo 10 min");
+series(d, new Object[]{C(d, "Q1", C0, 1170, false, "regando"), C(d, num(soilOk), C1, 1170, true, "suelo sigue seco")}, tFalla);
+setF = C(d, num(tFalla), C0, 1250, false, "10 min sin humedecer"); wire(d, null, setF); wireIn(d, setF, falla, 0);
+ack1 = C(d, "I5", C0, 1320, false, "reconocer"); wire(d, null, ack1); wireIn(d, ack1, falla, 1);
+
+// 5. contador de ciclos de riego del día
+ciclos = sfb(d, "CounterBlock", FB, 1400); p = ciclos.getBlock().getParameter(); p.getOn().setIntValue(7); p.getOff().setIntValue(7); refreshParam(ciclos); lbl(d, ciclos, "ciclos de riego del día");
+nd = C(d, num(wDia), C0, 1400, false, "nuevo día"); wire(d, null, nd); wireIn(d, nd, ciclos, 0);
+cu = C(d, "Q1", C0, 1470, false, "arranca riego"); wire(d, null, cu); wireIn(d, cu, ciclos, 1);
+avF = C(d, num(falla), C0, 1560, false, "falla de riego"); avC = C(d, num(ciclos), C0, 1630, false, "más de 6 riegos");
+wire(d, null, avF); wire(d, null, avC); wire(d, avF, q8); wire(d, avC, q8);
+
+// 6. ventilación por etapas
+series(d, new Object[]{C(d, "I1", C0, 1720, false, "automático"), C(d, num(hot), C1, 1720, false, "calor"), C(d, "I4", C2, 1720, true, "lluvia"), C(d, "I3", C3, 1720, true, "emergencia")}, q4);
+etapa2 = timer(d, "OnDelayBlock", FB, 1810, 3, 0, "m"); lbl(d, etapa2, "etapa 2: 3 min de calor");
+series(d, new Object[]{C(d, num(hot), C0, 1800, false, "calor")}, etapa2);
+vA = C(d, "I1", C0, 1880, false, "automático"); vC = C(d, num(hot), C1, 1880, false, "calor");
+vE = C(d, num(etapa2), C2, 1880, false, "pasaron 3 min"); vL = C(d, "I4", C2, 1950, false, "lluvia");
+vP = C(d, "I3", C3, 1880, true, "emergencia");
+wire(d, null, vA); wire(d, vA, vC); wire(d, vC, vE); wire(d, vC, vL); wire(d, vE, vP); wire(d, vL, vP); wire(d, vP, q2);
+
+// 7. enclavamientos
+series(d, new Object[]{C(d, "I1", C0, 2040, false, "automático"), C(d, num(mild), C1, 2040, true, "frío"), C(d, "Q4", C2, 2040, true, "ventana abierta"), C(d, "I3", C3, 2040, true, "emergencia")}, q3);
+series(d, new Object[]{C(d, "I1", C0, 2120, false, "automático"), C(d, num(humid), C1, 2120, true, "aire seco"), C(d, "Q2", C2, 2120, true, "ventilador andando"), C(d, "I3", C3, 2120, true, "emergencia")}, q5);
+
+// 8. luces de cultivo
+series(d, new Object[]{C(d, "I1", C0, 2200, false, "automático"), C(d, num(sunny), C1, 2200, true, "poca luz"), C(d, num(wLuces), C2, 2200, false, "horario de luces"), C(d, "I3", C3, 2200, true, "emergencia")}, q6);
+
+// 9. alarma con memoria y reconocimiento
+alarma = sfb(d, "LatchingRelayBlock", FB, 2290); lbl(d, alarma, "alarma (memoria)");
+aC = C(d, num(crit), C0, 2290, false, "temp. crítica"); aE = C(d, "I3", C0, 2360, false, "emergencia");
+wire(d, null, aC); wire(d, null, aE); wireIn(d, aC, alarma, 0); wireIn(d, aE, alarma, 0);
+k2 = C(d, "I5", C0, 2430, false, "reconocer"); k2b = C(d, num(crit), C1, 2430, true, "temp. normal"); k2c = C(d, "I3", C2, 2430, true, "sin emergencia");
+wire(d, null, k2); wire(d, k2, k2b); wire(d, k2b, k2c); wireIn(d, k2c, alarma, 1);
+series(d, new Object[]{C(d, num(alarma), C0, 2520, false, "alarma memorizada")}, q7);
+
+saveDrawing(d, OUT + "Invernadero.lld");
+print("== Invernadero.lld");
+d2 = loadDrawing(OUT + "Invernadero.lld");
+print("bloques: " + d2.getWiringDiagram().getBlocks().size());
+dumpModel(d2);

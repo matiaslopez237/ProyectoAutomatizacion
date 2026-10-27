@@ -14,6 +14,12 @@ function hysteresis(value: number, on: number, off: number, prev: boolean): bool
   return value > on && value <= off
 }
 
+/** Una leva del temporizador semanal: conexión ≤ hora < desconexión (puede cruzar la medianoche). Igual conexión y desconexión = leva sin usar. */
+function inWindow(h: number, on: number, off: number): boolean {
+  if (on === off) return false
+  return on < off ? h >= on && h < off : h >= on || h < off
+}
+
 /**
  * Un ciclo de scan: lee entradas, recorre la escalera siguiendo los cables desde la barra
  * y actualiza bobinas y funciones especiales.
@@ -154,6 +160,13 @@ export function scan(c: Circuit, prev: PlcState, inputs: PlcInputs, dt: number):
         const q = hysteresis(value, p.On ?? 0, p.Off ?? 0, old.q)
         fb[b.op] = { q, value }
         res = { inputs: [pinPower(b, 0)], out: q, ana: value }
+        break
+      }
+      case 'WEEK': {
+        const h = (inputs.hour ?? 0) % 24
+        const q = inWindow(h, p.on1 ?? 0, p.off1 ?? 0) || inWindow(h, p.on2 ?? 0, p.off2 ?? 0)
+        fb[b.op] = { q }
+        res = { inputs: [], out: q }
         break
       }
       case 'ACMP': {

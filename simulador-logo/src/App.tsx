@@ -7,6 +7,7 @@ import { Toolbar } from './editor/Toolbar'
 import { SCENARIOS } from './scenarios'
 import { startRuntime } from './sim/runtime'
 import { useStore } from './store'
+import { DocsDialog } from './ui/DocsDialog'
 import { EnvPanel } from './ui/EnvPanel'
 import { FileDialog } from './ui/FileDialog'
 import { SketchPanel } from './ui/SketchPanel'
@@ -71,6 +72,7 @@ export default function App() {
   const [left, setLeft] = useState(290)
   const [right, setRight] = useState(440)
   const [fileOpen, setFileOpen] = useState(false)
+  const [docsOpen, setDocsOpen] = useState(false)
 
   useEffect(() => startRuntime(), [])
 
@@ -114,6 +116,9 @@ export default function App() {
             ))}
           </select>
         </label>
+        <button type="button" className="btn btn-ghost" onClick={() => setDocsOpen(true)}>
+          Conexiones y E/S
+        </button>
         <div className="appbar-run">
           <button type="button" className={`run ${running ? 'is-run' : 'is-stop'}`} onClick={() => setRunning(!running)} aria-pressed={running}>
             <span className="run-led" aria-hidden="true" />
@@ -162,6 +167,7 @@ export default function App() {
 
       <PropertiesDialog />
       <FileDialog open={fileOpen} onClose={() => setFileOpen(false)} />
+      <DocsDialog open={docsOpen} onClose={() => setDocsOpen(false)} />
     </div>
   )
 }

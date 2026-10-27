@@ -8,6 +8,7 @@ const FB_TEXT: Partial<Record<BlockType, string>> = {
   RS: 'RS',
   ATRIG: 'A↗',
   ACMP: 'A−A',
+  WEEK: '◷',
 }
 
 /** Ícono amarillo del bloque, dibujado en coordenadas locales (0,0 = esquina del bloque). */

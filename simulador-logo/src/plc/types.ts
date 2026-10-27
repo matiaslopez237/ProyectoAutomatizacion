@@ -12,6 +12,7 @@ export type BlockType =
   | 'RS' // relé autoenclavador (SET / RESET)
   | 'ATRIG' // conmutador analógico de valor umbral
   | 'ACMP' // comparador analógico
+  | 'WEEK' // temporizador semanal (franjas horarias del día)
 
 export interface Block {
   id: string
@@ -44,6 +45,8 @@ export interface PlcInputs {
   bin: Record<string, boolean>
   /** valores crudos 0…1000, como los lee LOGO! */
   ana: Record<string, number>
+  /** hora del reloj del PLC (0…24), para el temporizador semanal */
+  hour?: number
 }
 
 export interface FbState {

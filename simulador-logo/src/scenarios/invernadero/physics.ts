@@ -50,14 +50,17 @@ export function stepGreenhouse(
   if (q.Q3) dT += 0.035 // calefactor
   if (q.Q5) dT -= 0.006 // el nebulizador enfría por evaporación
 
+  // presión de agua de la red: con 0 % el aspersor y el nebulizador se activan pero no sale agua
+  const water = clamp((p.supply ?? 100) / 100, 0, 1)
+
   let dRh = (p.rhExt - s.rh) * exchange
-  if (q.Q5) dRh += 0.12
-  if (q.Q1) dRh += 0.03
+  if (q.Q5) dRh += 0.12 * water
+  if (q.Q1) dRh += 0.03 * water
   dRh -= Math.max(0, s.temp - 22) * 0.0015
 
   // evaporación del suelo: crece con temperatura, sol y el factor del cultivo
   let dSoil = -p.evap * (0.004 + 0.0007 * Math.max(0, s.temp) + 0.008 * sun)
-  if (q.Q1) dSoil += 0.22
+  if (q.Q1) dSoil += 0.22 * water
   if (rain && windowOpen > 0.2) dSoil += 0.04 * windowOpen
 
   const temp = s.temp + dT * dt

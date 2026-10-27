@@ -4,12 +4,15 @@ Trabajos de Tecnología de la Automatización (UTN FRSR) con PLC Siemens LOGO!.
 
 **Simulador online:** https://matiaslopez237.github.io/ProyectoAutomatizacion/
 
+**Proyecto final: [invernadero automatizado](docs/invernadero.md)** (funcionamiento, hardware, tabla de E/S, diagrama de conexiones y cómo mostrarlo).
+
 ## Contenido
 
 | Carpeta | Qué hay |
 |---|---|
+| `docs/` | Documentación del proyecto del invernadero. |
 | `simulador-logo/` | Simulador web: editor KOP tipo LOGO!Soft, sliders del entorno y dibujo del proceso (escenario actual: invernadero). |
-| `Ejercicios/` | Programas `.lld` de LOGO!Soft Comfort: los propios, `Nuevos/` (ejercicios extra) y `Guia TP/` (un archivo por ejercicio de la guía). |
+| `Ejercicios/` | Programas `.lld` de LOGO!Soft Comfort: los propios, `Proyecto/Invernadero.lld`, `Nuevos/` (ejercicios extra) y `Guia TP/` (un archivo por ejercicio de la guía). |
 | `generador-lld/` | Scripts que arman los `.lld` por código usando las clases de LOGO!Soft Comfort V7. |
 
 ## Simulador

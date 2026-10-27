@@ -14,6 +14,6 @@ for j in "$LOGO_DIR"/lib/*.jar "$LOGO_DIR"/lib/*.zip; do CP="$CP;$(cygpath -w "$
 
 cd "$LOGO_DIR"
 # headless: si algo intenta abrir un diálogo, falla con un error en vez de quedar colgado
-"$LOGO_DIR/jre/bin/java" -Djava.library.path=bin -Djava.awt.headless=true \
+"$LOGO_DIR/jre/bin/java" -Dfile.encoding=UTF-8 -Djava.library.path=bin -Djava.awt.headless=true \
   -Dlogo.dir="$(cygpath -m "$LOGO_DIR")" -Dgen.dir="$(cygpath -m "$HERE")" -Drepo.dir="$(cygpath -m "$REPO")" \
   -cp "$CP" bsh.Interpreter "$(cygpath -w "$HERE/$SCRIPT")" "$@" 2>&1 | grep -vE "hirestimer|tzmappings"

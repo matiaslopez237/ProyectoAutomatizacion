@@ -17,7 +17,15 @@ export interface SliderDef {
 }
 
 /** Entrada digital que el usuario acciona desde el panel (selector, pulsador, sensor simulado) */
-export interface DigitalDef {
+/** Datos de montaje de una entrada o salida, para la tabla de E/S */
+export interface Wiring {
+  /** borne del módulo, por ejemplo "LOGO! I1" o "AM2 U1" */
+  terminal?: string
+  /** dispositivo de campo conectado */
+  device?: string
+}
+
+export interface DigitalDef extends Wiring {
   op: string
   label: string
   /** switch: queda en la posición; button: vale 1 mientras se mantiene apretado */
@@ -27,7 +35,7 @@ export interface DigitalDef {
 }
 
 /** Sensor analógico: el escenario da el valor en unidades reales; LOGO! lo ve como value * scale (0…1000). */
-export interface SensorDef<S> {
+export interface SensorDef<S> extends Wiring {
   op: string
   label: string
   unit: string
@@ -37,9 +45,17 @@ export interface SensorDef<S> {
   read: (state: S, params: Record<string, number>) => number
 }
 
-export interface OutputDef {
+export interface OutputDef extends Wiring {
   op: string
   label: string
+}
+
+/** Documentación del montaje: módulos usados y diagrama de conexiones */
+export interface ScenarioDocs {
+  hardware: { module: string; role: string }[]
+  /** URL del SVG del diagrama de conexiones */
+  wiringSvg: string
+  notes?: string[]
 }
 
 export interface SketchProps<S> {
@@ -66,4 +82,5 @@ export interface Scenario<S = any> {
   step: (state: S, outputs: Record<string, boolean>, params: Record<string, number>, digital: Record<string, boolean>, dt: number) => S
   Sketch: ComponentType<SketchProps<S>>
   example: () => Circuit
+  docs?: ScenarioDocs
 }

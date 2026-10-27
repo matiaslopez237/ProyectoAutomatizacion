@@ -24,6 +24,14 @@ function paramLines(b: Block, fb?: FbState): string[] {
       return fb ? [`T = ${fmt(fb.t ?? 0)} s`, `de ${fmtTime(p.T ?? 0)}`] : ['Rem = off', `${fmtTime(p.T ?? 0)}+`]
     case 'CTR':
       return fb ? [`Cnt = ${fb.count ?? 0}`, `On=${p.On} Off=${p.Off}`] : ['Rem = off', `On=${p.On}+`, `Off=${p.Off}`]
+    case 'WEEK': {
+      const hh = (h: number) => `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
+      const cams = [
+        [p.on1, p.off1],
+        [p.on2, p.off2],
+      ].filter(([a, b]) => a !== b)
+      return cams.map(([a, b]) => `${hh(a ?? 0)}–${hh(b ?? 0)}`).concat(fb ? [fb.q ? 'Q = 1' : 'Q = 0'] : [])
+    }
     case 'ATRIG':
     case 'ACMP':
       return fb ? [`Ax = ${fmt(fb.value ?? 0)}`, `On=${p.On} Off=${p.Off}`] : [`Gain=${fmt(p.gain ?? 1, 2)}+`, `On=${p.On}`, `Off=${p.Off}`]

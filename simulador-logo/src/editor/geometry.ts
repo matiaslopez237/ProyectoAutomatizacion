@@ -10,7 +10,7 @@ export const PIN_GAP = 20
 export const snap = (v: number) => Math.round(v / GRID) * GRID
 
 export function blockSize(b: Block) {
-  if (isFb(b.type)) return { w: 56, h: 49 + PIN_GAP * (BLOCK_DEFS[b.type].pins.length - 1) }
+  if (isFb(b.type)) return { w: 56, h: 49 + PIN_GAP * Math.max(0, BLOCK_DEFS[b.type].pins.length - 1) }
   return { w: 36, h: 49 }
 }
 
@@ -20,7 +20,7 @@ export function inPin(b: Block, i: number) {
 
 export function outPin(b: Block) {
   const { w } = blockSize(b)
-  const n = BLOCK_DEFS[b.type].pins.length
+  const n = Math.max(1, BLOCK_DEFS[b.type].pins.length)
   return { x: b.x + w, y: b.y + PIN_Y + (isFb(b.type) ? (PIN_GAP * (n - 1)) / 2 : 0) }
 }
 

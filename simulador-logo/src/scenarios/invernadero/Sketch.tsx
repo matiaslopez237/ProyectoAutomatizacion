@@ -31,6 +31,7 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
   const hour = params.hour ?? 13
   const day = daylight(hour)
   const rain = !!digital.I4
+  const water = (params.supply ?? 100) / 100
   // el sol recorre un arco de este a oeste entre la salida y la puesta; la luna hace lo mismo de noche
   const isDay = hour > SUNRISE && hour < SUNSET
   const nightLen = 24 - (SUNSET - SUNRISE)
@@ -120,14 +121,24 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
         <g key={x}>
           <rect x={x - 3} y="203" width="6" height="7" fill="#5b6670" />
           {q.Q1 &&
+            water > 0.05 &&
             Array.from({ length: 6 }, (_, k) => (
               <circle key={k} className="gh-drop" cx={x + (k - 2.5) * 5} cy="212" r="2.2" style={{ animationDelay: `${(k * 0.13 + i * 0.07) % 0.8}s` }} />
             ))}
         </g>
       ))}
 
+      {q.Q1 && water <= 0.05 && (
+        <g className="gh-nowater" transform="translate(240 186)">
+          <rect x="-4" y="-11" width="88" height="15" rx="2" />
+          <text x="40" y="0" textAnchor="middle">
+            SIN AGUA
+          </text>
+        </g>
+      )}
+
       {/* nebulizador */}
-      {q.Q5 && (
+      {q.Q5 && water > 0.05 && (
         <g className="gh-mist">
           {[140, 220, 300, 380, 440].map((x, i) => (
             <ellipse key={x} cx={x} cy={240 + (i % 2) * 14} rx="42" ry="13" style={{ animationDelay: `${i * -0.7}s` }} />
@@ -183,7 +194,19 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
         <path d="M-7 -2 a7 9 0 0 1 14 0 z" className={q.Q7 ? 'gh-beacon is-on' : 'gh-beacon'} />
       </g>
 
+      {/* tablero eléctrico con el piloto de aviso de riego */}
+      <g transform="translate(500 268)">
+        <rect width="46" height="62" rx="3" fill="#c9cfd4" stroke="#7d8790" />
+        <rect x="6" y="6" width="34" height="20" rx="2" fill="#2e353b" />
+        <text x="23" y="20" textAnchor="middle" className="gh-panel-text">
+          PLC
+        </text>
+        <circle cx="16" cy="42" r="6" className={q.Q8 ? 'gh-amber is-on' : 'gh-amber'} />
+        <circle cx="32" cy="42" r="6" className={q.Q7 ? 'gh-red is-on' : 'gh-red'} />
+      </g>
+
       {/* etiquetas de salidas */}
+      <Tag x={556} y={336} op="Q8" label="Aviso riego" on={!!q.Q8} anchor="end" />
       <Tag x={452} y={210} op="Q1" label="Aspersor" on={!!q.Q1} />
       <Tag x={128} y={232} op="Q2" label="Ventilador" on={!!q.Q2} />
       <Tag x={152} y={322} op="Q3" label="Calefactor" on={!!q.Q3} />
