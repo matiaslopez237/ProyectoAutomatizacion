@@ -176,7 +176,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-ghost { background: transparent; }
 
 /* ---------- distribución ---------- */
-.cols { flex: 1; min-height: 0; display: grid; }
+.rows { flex: 1; min-height: 0; display: grid; }
+.cols { min-height: 0; display: grid; }
+.resizer-h { cursor: row-resize; border-inline: 0; border-block: 1px solid var(--line); }
 .stack { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* position: relative contiene los elementos ocultos (sr-only, checkbox) dentro del scroll del panel */
 .panel { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--surface); }
@@ -378,6 +380,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .panel-sketch { overflow-y: auto; }
 .sketch { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .sketch-note { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
+
+/* escritorio: el proceso va abajo a todo el ancho; el dibujo toma toda la altura y el texto queda al costado */
+@media (min-width: 981px) {
+  .rows > .panel-sketch { overflow: hidden; }
+  .rows > .panel-sketch .sketch { height: 100%; flex-direction: row; align-items: center; justify-content: center; gap: 24px; padding-block: 10px; }
+  .rows > .panel-sketch .gh { height: 100%; width: auto; max-width: calc(100% - 300px); max-height: none; }
+  .rows > .panel-sketch .sketch-note { flex: 0 1 260px; }
+}
 
 /* ---------- diálogos ---------- */
 .props {

@@ -21,9 +21,9 @@ function paramLines(b: Block, fb?: FbState): string[] {
   switch (b.type) {
     case 'TON':
     case 'TOF':
-      return fb ? [`T = ${fmt(fb.t ?? 0)} s`, `de ${fmtTime(p.T ?? 0)}`] : ['Rem = off', `${fmtTime(p.T ?? 0)}+`]
+      return fb ? [`T = ${fmt(fb.t ?? 0)} s`, `de ${fmtTime(p.T ?? 0)}`] : [`${fmtTime(p.T ?? 0)}+`]
     case 'CTR':
-      return fb ? [`Cnt = ${fb.count ?? 0}`, `On=${p.On} Off=${p.Off}`] : ['Rem = off', `On=${p.On}+`, `Off=${p.Off}`]
+      return fb ? [`Cnt = ${fb.count ?? 0}`, `On=${p.On} Off=${p.Off}`] : [`On=${p.On} Off=${p.Off}`]
     case 'WEEK': {
       const hh = (h: number) => `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
       const cams = [
@@ -34,7 +34,7 @@ function paramLines(b: Block, fb?: FbState): string[] {
     }
     case 'ATRIG':
     case 'ACMP':
-      return fb ? [`Ax = ${fmt(fb.value ?? 0)}`, `On=${p.On} Off=${p.Off}`] : [`Gain=${fmt(p.gain ?? 1, 2)}+`, `On=${p.On}`, `Off=${p.Off}`]
+      return fb ? [`Ax = ${fmt(fb.value ?? 0)}`, `On=${p.On} Off=${p.Off}`] : [`On=${p.On} Off=${p.Off}`, `Gain=${fmt(p.gain ?? 1, 2)}`]
     default:
       return []
   }
@@ -95,9 +95,10 @@ const BlockView = memo(function BlockView({
         </g>
       )}
       {lines.length > 0 && (
-        <text className={`kop-param${running ? ' is-live' : ''}`} x={6} y={h + 10}>
+        // a la derecha del bloque, por encima y por debajo de la salida, para no pisar el escalón de abajo
+        <text className={`kop-param${running ? ' is-live' : ''}`}>
           {lines.map((l, i) => (
-            <tspan key={i} x={6} dy={i === 0 ? 0 : 11}>
+            <tspan key={i} x={w + 6} y={[12, 23, 50, 61][i] ?? 61 + 11 * (i - 3)}>
               {l}
             </tspan>
           ))}

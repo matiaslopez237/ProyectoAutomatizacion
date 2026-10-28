@@ -31,25 +31,27 @@ function useNarrow() {
   return narrow
 }
 
-function Resizer({ onDrag, label }: { onDrag: (dx: number) => void; label: string }) {
+/** Separador arrastrable. Vertical mueve en x (paneles lado a lado); horizontal mueve en y (panel de abajo). */
+function Resizer({ onDrag, label, horizontal = false }: { onDrag: (d: number) => void; label: string; horizontal?: boolean }) {
   return (
     <div
-      className="resizer"
+      className={horizontal ? 'resizer resizer-h' : 'resizer'}
       role="separator"
-      aria-orientation="vertical"
+      aria-orientation={horizontal ? 'horizontal' : 'vertical'}
       aria-label={label}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'ArrowLeft') onDrag(-20)
-        if (e.key === 'ArrowRight') onDrag(20)
+        if (e.key === (horizontal ? 'ArrowUp' : 'ArrowLeft')) onDrag(-20)
+        if (e.key === (horizontal ? 'ArrowDown' : 'ArrowRight')) onDrag(20)
       }}
       onPointerDown={(e) => {
         const el = e.currentTarget
         el.setPointerCapture(e.pointerId)
-        let last = e.clientX
+        let last = horizontal ? e.clientY : e.clientX
         const move = (ev: PointerEvent) => {
-          onDrag(ev.clientX - last)
-          last = ev.clientX
+          const now = horizontal ? ev.clientY : ev.clientX
+          onDrag(now - last)
+          last = now
         }
         const up = () => {
           el.removeEventListener('pointermove', move)
@@ -70,7 +72,7 @@ export default function App() {
   const narrow = useNarrow()
   const [tab, setTab] = useState<Tab>('programa')
   const [left, setLeft] = useState(290)
-  const [right, setRight] = useState(440)
+  const [bottom, setBottom] = useState(() => Math.round(Math.min(380, Math.max(240, window.innerHeight * 0.38))))
   const [fileOpen, setFileOpen] = useState(false)
   const [docsOpen, setDocsOpen] = useState(false)
 
@@ -156,11 +158,18 @@ export default function App() {
           </main>
         </>
       ) : (
-        <main className="cols" style={{ gridTemplateColumns: `${left}px 6px minmax(360px, 1fr) 6px ${right}px` }}>
-          {env}
-          <Resizer label="Ancho del panel de entorno" onDrag={(dx) => setLeft((w) => Math.min(460, Math.max(220, w + dx)))} />
-          {editor}
-          <Resizer label="Ancho del panel del proceso" onDrag={(dx) => setRight((w) => Math.min(760, Math.max(300, w - dx)))} />
+        // arriba: entorno y programa lado a lado; abajo: el proceso a todo el ancho
+        <main className="rows" style={{ gridTemplateRows: `minmax(220px, 1fr) 6px ${bottom}px` }}>
+          <div className="cols" style={{ gridTemplateColumns: `${left}px 6px minmax(360px, 1fr)` }}>
+            {env}
+            <Resizer label="Ancho del panel de entorno" onDrag={(dx) => setLeft((w) => Math.min(460, Math.max(220, w + dx)))} />
+            {editor}
+          </div>
+          <Resizer
+            horizontal
+            label="Alto del panel del proceso"
+            onDrag={(dy) => setBottom((h) => Math.min(window.innerHeight - 320, Math.max(160, h - dy)))}
+          />
           {process}
         </main>
       )}
