@@ -67,6 +67,7 @@
 
 .gh-nowater rect { fill: #b3261e; }
 .gh-nowater text { fill: #fff; font: 700 10px var(--font-mono); letter-spacing: 0.06em; }
+.gh-small-text { fill: #eef3f6; font: 600 11px var(--font-mono); }
 .gh-panel-text { fill: #4ade6b; font: 600 9px var(--font-mono); }
 .gh-amber { fill: #6b5520; }
 .gh-amber.is-on { fill: #ffb300; animation: gh-blink 0.8s steps(2, jump-none) infinite; }

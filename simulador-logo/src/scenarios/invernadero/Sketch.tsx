@@ -9,6 +9,9 @@ const mix = (a: string, b: string, t: number) => {
   return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * clamp01(t))).join(',')})`
 }
 
+// el invernadero ocupa x 70…490; el lienzo es más ancho para que el dibujo llene el panel de abajo
+const VX = -220
+const VW = 1000
 const NOZZLES = [170, 250, 330, 410]
 const PLANTS = [145, 210, 275, 340, 405]
 
@@ -36,7 +39,7 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
   const isDay = hour > SUNRISE && hour < SUNSET
   const nightLen = 24 - (SUNSET - SUNRISE)
   const arc = isDay ? (hour - SUNRISE) / (SUNSET - SUNRISE) : (((hour - SUNSET + 24) % 24) / nightLen)
-  const bodyX = 30 + arc * 500
+  const bodyX = VX + 60 + arc * (VW - 120)
   const bodyY = 175 - Math.sin(Math.PI * arc) * 140
   const twilight = Math.max(0, 1 - Math.min(Math.abs(hour - SUNRISE), Math.abs(hour - SUNSET)) / 1.2)
   const hot = clamp01((state.temp - 26) / 18)
@@ -47,7 +50,7 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
   const roofY = (x: number) => 110 + (x - 280) * (80 / 210)
 
   return (
-    <svg className="gh" viewBox="0 0 560 420" role="img" aria-label="Dibujo del invernadero con sus actuadores">
+    <svg className="gh" viewBox={`${VX} 0 ${VW} 420`} role="img" aria-label="Dibujo del invernadero con sus actuadores">
       <defs>
         <radialGradient id="gh-heat" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ff8a3d" stopOpacity="0.85" />
@@ -60,12 +63,12 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
       </defs>
 
       {/* cielo y sol */}
-      <rect width="560" height="420" fill={mix('101a30', rain ? '8ea3b5' : '9ed2ef', Math.min(1, day * 1.4))} />
-      <rect width="560" height="200" fill="#ff9a52" opacity={twilight * 0.35} />
+      <rect x={VX} width={VW} height="420" fill={mix('101a30', rain ? '8ea3b5' : '9ed2ef', Math.min(1, day * 1.4))} />
+      <rect x={VX} width={VW} height="200" fill="#ff9a52" opacity={twilight * 0.35} />
       {!isDay && (
         <g opacity={1 - twilight}>
-          {Array.from({ length: 28 }, (_, i) => (
-            <circle key={i} cx={(i * 97 + 13) % 560} cy={(i * 41 + 7) % 150} r={i % 3 ? 0.9 : 1.4} fill="#f4f1d8" />
+          {Array.from({ length: 48 }, (_, i) => (
+            <circle key={i} cx={VX + ((i * 97 + 13) % VW)} cy={(i * 41 + 7) % 150} r={i % 3 ? 0.9 : 1.4} fill="#f4f1d8" />
           ))}
         </g>
       )}
@@ -79,15 +82,42 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
       )}
       {rain && (
         <g className="gh-rain">
-          {Array.from({ length: 36 }, (_, i) => (
-            <line key={i} x1={(i * 37) % 560} y1={(i * 53) % 120} x2={((i * 37) % 560) - 4} y2={((i * 53) % 120) + 12} style={{ animationDelay: `${(i % 9) * -0.09}s` }} />
+          {Array.from({ length: 64 }, (_, i) => (
+            <line
+              key={i}
+              x1={VX + ((i * 37) % VW)}
+              y1={(i * 53) % 120}
+              x2={VX + ((i * 37) % VW) - 4}
+              y2={((i * 53) % 120) + 12}
+              style={{ animationDelay: `${(i % 9) * -0.09}s` }}
+            />
           ))}
         </g>
       )}
 
+      {/* paisaje a los costados: lomas y árboles */}
+      <ellipse cx={VX + 110} cy="372" rx="210" ry="70" fill="#5f7d3a" />
+      <ellipse cx={VX + VW - 60} cy="376" rx="200" ry="58" fill="#56733a" />
+      {[VX + 40, VX + 120, VX + VW - 70].map((x, i) => (
+        <g key={x} transform={`translate(${x} ${330 - i * 6})`}>
+          <rect x="-4" y="0" width="8" height="30" fill="#5b4632" />
+          <circle cy="-8" r="22" fill={mix('6b6a2c', '3d7a35', h * 0.4 + 0.6)} />
+        </g>
+      ))}
+
       {/* suelo exterior */}
-      <rect y="360" width="560" height="60" fill="#5d4c39" />
-      <rect y="356" width="560" height="6" fill="#6f8f3e" />
+      <rect x={VX} y="360" width={VW} height="60" fill="#5d4c39" />
+      <rect x={VX} y="356" width={VW} height="6" fill="#6f8f3e" />
+
+      {/* tanque de agua de la red: el nivel sigue a la presión de agua */}
+      <g transform="translate(600 250)">
+        <rect x="0" y="0" width="64" height="106" rx="4" fill="#cfd8de" stroke="#7d8a96" strokeWidth="2" />
+        <rect x="4" y={4 + 98 * (1 - water)} width="56" height={98 * water} fill="#4fa3e3" opacity="0.85" />
+        <text x="32" y="122" textAnchor="middle" className="gh-small-text">
+          tanque {Math.round(water * 100)} %
+        </text>
+      </g>
+      <polyline points="632,250 632,202 452,202" fill="none" stroke="#7d8a96" strokeWidth="5" strokeLinejoin="round" />
 
       {/* invernadero: vidrio con tinte según la temperatura interior */}
       <polygon points="70,360 70,190 280,110 490,190 490,360" fill="#dff1ff" opacity="0.22" />
@@ -216,7 +246,7 @@ export function GreenhouseSketch({ state, outputs: q, params, digital }: SketchP
       <Tag x={296} y={86} op="Q7" label="Alarma" on={!!q.Q7} />
 
       {/* lectura rápida */}
-      <g className="gh-readout" transform="translate(12 12)">
+      <g className="gh-readout" transform={`translate(${VX + 12} 12)`}>
         <rect width="210" height="72" rx="4" />
         <text x="10" y="20">
           {String(Math.floor(hour) % 24).padStart(2, '0')}:{String(Math.round((hour % 1) * 60) % 60).padStart(2, '0')} h · Sol {Math.round(sun * 100)} %

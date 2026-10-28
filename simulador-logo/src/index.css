@@ -384,9 +384,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* escritorio: el proceso va abajo a todo el ancho; el dibujo toma toda la altura y el texto queda al costado */
 @media (min-width: 981px) {
   .rows > .panel-sketch { overflow: hidden; }
-  .rows > .panel-sketch .sketch { height: 100%; flex-direction: row; align-items: center; justify-content: center; gap: 24px; padding-block: 10px; }
-  .rows > .panel-sketch .gh { height: 100%; width: auto; max-width: calc(100% - 300px); max-height: none; }
-  .rows > .panel-sketch .sketch-note { flex: 0 1 260px; }
+  .rows > .panel-sketch .sketch { height: 100%; flex-direction: row; align-items: center; justify-content: center; gap: 20px; padding-block: 8px; }
+  .rows > .panel-sketch .gh { height: 100%; width: auto; max-width: calc(100% - 240px); max-height: none; }
+  .rows > .panel-sketch .sketch-note { flex: 0 1 210px; }
+  .sketch-size { position: absolute; top: 10px; right: 16px; z-index: 1; }
 }
 
 /* ---------- diálogos ---------- */

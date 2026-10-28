@@ -72,7 +72,11 @@ export default function App() {
   const narrow = useNarrow()
   const [tab, setTab] = useState<Tab>('programa')
   const [left, setLeft] = useState(290)
-  const [bottom, setBottom] = useState(() => Math.round(Math.min(380, Math.max(240, window.innerHeight * 0.38))))
+  // alto del panel del proceso: arranca en la mitad de la pantalla; el botón lo lleva al máximo y lo vuelve
+  const defaultBottom = () => Math.round(Math.max(260, window.innerHeight * 0.5))
+  const maxBottom = () => Math.max(260, window.innerHeight - 290)
+  const [bottom, setBottom] = useState(defaultBottom)
+  const expanded = bottom >= maxBottom() - 10
   const [fileOpen, setFileOpen] = useState(false)
   const [docsOpen, setDocsOpen] = useState(false)
 
@@ -95,6 +99,11 @@ export default function App() {
   )
   const process = (
     <section className="panel panel-sketch" aria-label="Proceso">
+      {!narrow && (
+        <button type="button" className="btn btn-small sketch-size" onClick={() => setBottom(expanded ? defaultBottom() : maxBottom())} aria-pressed={expanded}>
+          {expanded ? '⤡ Achicar' : '⤢ Agrandar'}
+        </button>
+      )}
       <SketchPanel />
     </section>
   )
@@ -168,7 +177,7 @@ export default function App() {
           <Resizer
             horizontal
             label="Alto del panel del proceso"
-            onDrag={(dy) => setBottom((h) => Math.min(window.innerHeight - 320, Math.max(160, h - dy)))}
+            onDrag={(dy) => setBottom((h) => Math.min(maxBottom(), Math.max(160, h - dy)))}
           />
           {process}
         </main>
