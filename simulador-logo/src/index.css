@@ -99,6 +99,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .app {
   height: 100%;
+  /* la app ocupa la pantalla justa: solo scrollean los paneles, nunca la página */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   padding-left: max(0px, env(safe-area-inset-left, 0px));
@@ -176,7 +178,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- distribución ---------- */
 .cols { flex: 1; min-height: 0; display: grid; }
 .stack { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--surface); }
+/* position: relative contiene los elementos ocultos (sr-only, checkbox) dentro del scroll del panel */
+.panel { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--surface); }
 .resizer { background: var(--bg); cursor: col-resize; border-inline: 1px solid var(--line); }
 .resizer:hover, .resizer:focus-visible { background: var(--accent); }
 .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--line); padding-inline: max(8px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-right, 0px)); }
