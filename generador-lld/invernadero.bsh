@@ -22,13 +22,14 @@ d = loadDrawing(TEMPLATE); clearDrawing(d);
 comment(d, "Invernadero automatizado - I1 auto | I2 riego manual | I3 emergencia | I4 lluvia | I5 reconocer", 860, 4);
 
 // salidas primero: sus contactos (Q1, Q2, Q4) se usan en otros escalones
-q1 = Q(d, "Q1", 1090, "aspersor"); q8 = Q(d, "Q8", 1560, "aviso de riego"); q4 = Q(d, "Q4", 1720, "ventana cenital");
-q2 = Q(d, "Q2", 1880, "ventilador"); q3 = Q(d, "Q3", 2040, "calefactor"); q5 = Q(d, "Q5", 2120, "nebulizador");
-q6 = Q(d, "Q6", 2200, "luces de cultivo"); q7 = Q(d, "Q7", 2520, "alarma");
+q1 = Q(d, "Q1", 1240, "aspersor"); q8 = Q(d, "Q8", 1710, "aviso de riego"); q4 = Q(d, "Q4", 1870, "ventana cenital");
+q2 = Q(d, "Q2", 2110, "ventilador"); q3 = Q(d, "Q3", 2350, "calefactor"); q5 = Q(d, "Q5", 2430, "nebulizador");
+q6 = Q(d, "Q6", 2510, "luces de cultivo"); q7 = Q(d, "Q7", 2830, "alarma");
 
 // 1. sensores analógicos -> umbrales con histéresis (ganancia 0,1 -> °C o %)
 soilOk = atrig(d, "AI3", 40, "humedad suelo", "suelo húmedo (>45 %)", 45, 30);
-soilMin = atrig(d, "AI3", 120, "humedad suelo", "suelo >20 %", 20, 15);
+// ventana (On < Off): vale 1 con el suelo por debajo de 15 %
+soilMin = atrig(d, "AI3", 120, "humedad suelo", "suelo muy seco (<15 %)", 0, 15);
 mild = atrig(d, "AI1", 200, "temperatura", "templado (>18 °C)", 18, 15);
 hot = atrig(d, "AI1", 280, "temperatura", "calor (>28 °C)", 28, 25);
 crit = atrig(d, "AI1", 360, "temperatura", "temp. crítica (>38 °C)", 38, 35);
@@ -40,58 +41,65 @@ wRiego = weekly(d, 860, 60, new int[][]{{7,0,9,0},{18,0,20,0}}); lbl(d, wRiego, 
 wLuces = weekly(d, 860, 260, new int[][]{{6,0,22,0}}); lbl(d, wLuces, "luces permitidas");
 wDia = weekly(d, 860, 460, new int[][]{{0,0,0,10}}); lbl(d, wDia, "nuevo día");
 
-// 3. riego
-yR = 860;
+// 3. riego: en horario con suelo seco (<=30 %) o a cualquier hora con suelo muy seco (<15 %); hasta pasar el 45 %.
+// "Muy seco" queda memorizado (relé autoenclavador) desde <15 % hasta >45 %.
+muySecoMem = sfb(d, "LatchingRelayBlock", FB, 860); lbl(d, muySecoMem, "suelo muy seco: riega hasta 45 % (memoria)");
+sMS = C(d, num(soilMin), C0, 860, false, "suelo <15 %"); wire(d, null, sMS); wireIn(d, sMS, muySecoMem, 0);
+rMS = C(d, num(soilOk), C0, 930, false, "suelo >45 %"); wire(d, null, rMS); wireIn(d, rMS, muySecoMem, 1);
+yR = 1010;
 tof = timer(d, "OffDelayBlock", FB, yR + 10, 8, 0, "s"); lbl(d, tof, "riego +8 s");
-falla = sfb(d, "LatchingRelayBlock", FB, 1250); lbl(d, falla, "falla de riego (memoria)");
+falla = sfb(d, "LatchingRelayBlock", FB, 1400); lbl(d, falla, "falla de riego (memoria)");
 auto = C(d, "I1", C0, yR, false, "automático");
 enHorario = C(d, num(wRiego), C1, yR, false, "en horario");
 seco = C(d, num(soilOk), C2, yR, true, "suelo seco");
-muySeco = C(d, num(soilMin), C1, yR + 70, true, "suelo muy seco");
+muySeco = C(d, num(muySecoMem), C1, yR + 70, false, "suelo muy seco");
 sinFalla = C(d, num(falla), C3, yR, true, "sin falla");
 manual = C(d, "I2", C0, yR + 140, false, "riego manual");
 parada1 = C(d, "I3", C4, yR, true, "emergencia");
 wire(d, null, auto); wire(d, auto, enHorario); wire(d, enHorario, seco); wire(d, auto, muySeco);
 wire(d, seco, sinFalla); wire(d, muySeco, sinFalla); wire(d, sinFalla, parada1);
 wire(d, null, manual); wire(d, manual, parada1); wire(d, parada1, tof);
-series(d, new Object[]{C(d, num(tof), C0, 1090, false, "regando")}, q1);
+series(d, new Object[]{C(d, num(tof), C0, 1240, false, "regando")}, q1);
 
 // 4. detección de falla: 10 min regando sin que el suelo se humedezca
-tFalla = timer(d, "OnDelayBlock", FB, 1180, 10, 0, "m"); lbl(d, tFalla, "riego continuo 10 min");
-series(d, new Object[]{C(d, "Q1", C0, 1170, false, "regando"), C(d, num(soilOk), C1, 1170, true, "suelo sigue seco")}, tFalla);
-setF = C(d, num(tFalla), C0, 1250, false, "10 min sin humedecer"); wire(d, null, setF); wireIn(d, setF, falla, 0);
-ack1 = C(d, "I5", C0, 1320, false, "reconocer"); wire(d, null, ack1); wireIn(d, ack1, falla, 1);
+tFalla = timer(d, "OnDelayBlock", FB, 1330, 10, 0, "m"); lbl(d, tFalla, "riego continuo 10 min");
+series(d, new Object[]{C(d, "Q1", C0, 1320, false, "regando"), C(d, num(soilOk), C1, 1320, true, "suelo sigue seco")}, tFalla);
+setF = C(d, num(tFalla), C0, 1400, false, "10 min sin humedecer"); wire(d, null, setF); wireIn(d, setF, falla, 0);
+ack1 = C(d, "I5", C0, 1470, false, "reconocer"); wire(d, null, ack1); wireIn(d, ack1, falla, 1);
 
 // 5. contador de ciclos de riego del día
-ciclos = sfb(d, "CounterBlock", FB, 1400); p = ciclos.getBlock().getParameter(); p.getOn().setIntValue(7); p.getOff().setIntValue(7); refreshParam(ciclos); lbl(d, ciclos, "ciclos de riego del día");
-nd = C(d, num(wDia), C0, 1400, false, "nuevo día"); wire(d, null, nd); wireIn(d, nd, ciclos, 0);
-cu = C(d, "Q1", C0, 1470, false, "arranca riego"); wire(d, null, cu); wireIn(d, cu, ciclos, 1);
-avF = C(d, num(falla), C0, 1560, false, "falla de riego"); avC = C(d, num(ciclos), C0, 1630, false, "más de 6 riegos");
+ciclos = sfb(d, "CounterBlock", FB, 1550); p = ciclos.getBlock().getParameter(); p.getOn().setIntValue(7); p.getOff().setIntValue(7); refreshParam(ciclos); lbl(d, ciclos, "ciclos de riego del día");
+nd = C(d, num(wDia), C0, 1550, false, "nuevo día"); wire(d, null, nd); wireIn(d, nd, ciclos, 0);
+cu = C(d, "Q1", C0, 1620, false, "arranca riego"); wire(d, null, cu); wireIn(d, cu, ciclos, 1);
+avF = C(d, num(falla), C0, 1710, false, "falla de riego"); avC = C(d, num(ciclos), C0, 1780, false, "más de 6 riegos");
 wire(d, null, avF); wire(d, null, avC); wire(d, avF, q8); wire(d, avC, q8);
 
-// 6. ventilación por etapas
-series(d, new Object[]{C(d, "I1", C0, 1720, false, "automático"), C(d, num(hot), C1, 1720, false, "calor"), C(d, "I4", C2, 1720, true, "lluvia"), C(d, "I3", C3, 1720, true, "emergencia")}, q4);
-etapa2 = timer(d, "OnDelayBlock", FB, 1810, 3, 0, "m"); lbl(d, etapa2, "etapa 2: 3 min de calor");
-series(d, new Object[]{C(d, num(hot), C0, 1800, false, "calor")}, etapa2);
-vA = C(d, "I1", C0, 1880, false, "automático"); vC = C(d, num(hot), C1, 1880, false, "calor");
-vE = C(d, num(etapa2), C2, 1880, false, "pasaron 3 min"); vL = C(d, "I4", C2, 1950, false, "lluvia");
-vP = C(d, "I3", C3, 1880, true, "emergencia");
-wire(d, null, vA); wire(d, vA, vC); wire(d, vC, vE); wire(d, vC, vL); wire(d, vE, vP); wire(d, vL, vP); wire(d, vP, q2);
+// 6. ventilación por etapas: ventana con calor; ventilador si el calor sigue 3 min, si pasa de 30 °C o si llueve
+series(d, new Object[]{C(d, "I1", C0, 1870, false, "automático"), C(d, num(hot), C1, 1870, false, "calor"), C(d, "I4", C2, 1870, true, "lluvia"), C(d, "I3", C3, 1870, true, "emergencia")}, q4);
+etapa2 = timer(d, "OnDelayBlock", FB, 1960, 3, 0, "m"); lbl(d, etapa2, "etapa 2: 3 min de calor");
+series(d, new Object[]{C(d, num(hot), C0, 1950, false, "calor")}, etapa2);
+veryHot = atrig(d, "AI1", 2030, "temperatura", "mucho calor (>30 °C)", 30, 28);
+vA = C(d, "I1", C0, 2110, false, "automático"); vC = C(d, num(hot), C1, 2110, false, "calor");
+vE = C(d, num(etapa2), C2, 2110, false, "pasaron 3 min"); vM = C(d, num(veryHot), C2, 2180, false, "más de 30 °C");
+vL = C(d, "I4", C2, 2250, false, "lluvia");
+vP = C(d, "I3", C3, 2110, true, "emergencia");
+wire(d, null, vA); wire(d, vA, vC); wire(d, vC, vE); wire(d, vC, vM); wire(d, vC, vL);
+wire(d, vE, vP); wire(d, vM, vP); wire(d, vL, vP); wire(d, vP, q2);
 
 // 7. enclavamientos
-series(d, new Object[]{C(d, "I1", C0, 2040, false, "automático"), C(d, num(mild), C1, 2040, true, "frío"), C(d, "Q4", C2, 2040, true, "ventana abierta"), C(d, "I3", C3, 2040, true, "emergencia")}, q3);
-series(d, new Object[]{C(d, "I1", C0, 2120, false, "automático"), C(d, num(humid), C1, 2120, true, "aire seco"), C(d, "Q2", C2, 2120, true, "ventilador andando"), C(d, "I3", C3, 2120, true, "emergencia")}, q5);
+series(d, new Object[]{C(d, "I1", C0, 2350, false, "automático"), C(d, num(mild), C1, 2350, true, "frío"), C(d, "Q4", C2, 2350, true, "ventana abierta"), C(d, "I3", C3, 2350, true, "emergencia")}, q3);
+series(d, new Object[]{C(d, "I1", C0, 2430, false, "automático"), C(d, num(humid), C1, 2430, true, "aire seco"), C(d, "Q2", C2, 2430, true, "ventilador andando"), C(d, "I3", C3, 2430, true, "emergencia")}, q5);
 
 // 8. luces de cultivo
-series(d, new Object[]{C(d, "I1", C0, 2200, false, "automático"), C(d, num(sunny), C1, 2200, true, "poca luz"), C(d, num(wLuces), C2, 2200, false, "horario de luces"), C(d, "I3", C3, 2200, true, "emergencia")}, q6);
+series(d, new Object[]{C(d, "I1", C0, 2510, false, "automático"), C(d, num(sunny), C1, 2510, true, "poca luz"), C(d, num(wLuces), C2, 2510, false, "horario de luces"), C(d, "I3", C3, 2510, true, "emergencia")}, q6);
 
 // 9. alarma con memoria y reconocimiento
-alarma = sfb(d, "LatchingRelayBlock", FB, 2290); lbl(d, alarma, "alarma (memoria)");
-aC = C(d, num(crit), C0, 2290, false, "temp. crítica"); aE = C(d, "I3", C0, 2360, false, "emergencia");
+alarma = sfb(d, "LatchingRelayBlock", FB, 2600); lbl(d, alarma, "alarma (memoria)");
+aC = C(d, num(crit), C0, 2600, false, "temp. crítica"); aE = C(d, "I3", C0, 2670, false, "emergencia");
 wire(d, null, aC); wire(d, null, aE); wireIn(d, aC, alarma, 0); wireIn(d, aE, alarma, 0);
-k2 = C(d, "I5", C0, 2430, false, "reconocer"); k2b = C(d, num(crit), C1, 2430, true, "temp. normal"); k2c = C(d, "I3", C2, 2430, true, "sin emergencia");
+k2 = C(d, "I5", C0, 2740, false, "reconocer"); k2b = C(d, num(crit), C1, 2740, true, "temp. normal"); k2c = C(d, "I3", C2, 2740, true, "sin emergencia");
 wire(d, null, k2); wire(d, k2, k2b); wire(d, k2b, k2c); wireIn(d, k2c, alarma, 1);
-series(d, new Object[]{C(d, num(alarma), C0, 2520, false, "alarma memorizada")}, q7);
+series(d, new Object[]{C(d, num(alarma), C0, 2830, false, "alarma memorizada")}, q7);
 
 saveDrawing(d, OUT + "Invernadero.lld");
 print("== Invernadero.lld");

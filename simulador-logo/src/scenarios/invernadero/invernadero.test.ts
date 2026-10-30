@@ -49,16 +49,29 @@ class Sim {
 }
 
 describe('programa del invernadero', () => {
-  it('ventilación por etapas: primero la ventana, a los 3 min el ventilador', () => {
+  it('ventilación por etapas: con calor moderado (28-30 °C) primero la ventana, a los 3 min el ventilador', () => {
     let tWindow = -1
     let tFan = -1
-    new Sim({ tempExt: 34 }).run(900, (s) => {
+    new Sim({ tempExt: 24 }, { temp: 29 }).run(900, (s) => {
+      s.phys.temp = 29 // temperatura fija entre los dos umbrales
       if (tWindow < 0 && s.out.Q4) tWindow = s.t
       if (tFan < 0 && s.out.Q2) tFan = s.t
     })
     expect(tWindow).toBeGreaterThanOrEqual(0)
     expect(tFan - tWindow).toBeGreaterThanOrEqual(179)
     expect(tFan - tWindow).toBeLessThan(185)
+  })
+
+  it('con mucho calor (más de 30 °C) el ventilador arranca sin esperar los 3 min', () => {
+    let tWindow = -1
+    let tFan = -1
+    new Sim({ tempExt: 34 }).run(300, (s) => {
+      if (tWindow < 0 && s.out.Q4) tWindow = s.t
+      if (tFan < 0 && s.out.Q2) tFan = s.t
+    })
+    expect(tWindow).toBeGreaterThanOrEqual(0)
+    expect(tFan).toBeGreaterThanOrEqual(0)
+    expect(tFan - tWindow).toBeLessThan(5)
   })
 
   it('con lluvia la ventana no abre y el ventilador entra sin esperar', () => {
@@ -93,8 +106,26 @@ describe('programa del invernadero', () => {
     expect(inSchedule.Q1).toBe(true)
   })
 
-  it('suelo muy seco riega a cualquier hora', () => {
-    expect(new Sim({ hour: 13 }, { soil: 12 }).run(20).out.Q1).toBe(true)
+  it('suelo muy seco riega a cualquier hora, y sigue hasta pasar el 45 %', () => {
+    let started = false
+    let soilAtStop = -1
+    let offBelow45 = 0
+    new Sim({ hour: 13 }, { soil: 12 }).run(1200, (s) => {
+      if (s.out.Q1) started = true
+      else if (started && soilAtStop < 0) soilAtStop = s.phys.soil
+      if (started && soilAtStop < 0 && !s.out.Q1 && s.phys.soil < 45) offBelow45++
+    })
+    expect(started).toBe(true)
+    expect(offBelow45).toBe(0)
+    expect(soilAtStop).toBeGreaterThan(45)
+  })
+
+  it('fuera de horario, con el suelo entre 15 y 45 % no arranca a regar', () => {
+    let watered = false
+    new Sim({ hour: 13 }, { soil: 35 }).run(120, (s) => {
+      watered = watered || !!s.out.Q1
+    })
+    expect(watered).toBe(false)
   })
 
   it('falla de riego: 10 min regando sin agua corta el riego y avisa hasta reconocer', () => {

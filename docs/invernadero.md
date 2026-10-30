@@ -9,10 +9,10 @@ Proyecto de Tecnología de la Automatización (UTN FRSR). Un PLC Siemens LOGO! c
 
 | Función | Cómo lo resuelve el programa |
 |---|---|
-| Riego por horario y por humedad | Riega de 7 a 9 h y de 18 a 20 h (temporizador semanal) si el suelo está seco (≤ 30 %), hasta llegar al 45 %. Fuera de horario riega solo si el suelo está muy seco (≤ 15 %). Al cortar, sigue 8 s más (retardo a la desconexión). |
+| Riego por horario y por humedad | Riega de 7 a 9 h y de 18 a 20 h (temporizador semanal) si el suelo está seco (≤ 30 %), hasta llegar al 45 %. Fuera de horario riega solo si el suelo está muy seco (< 15 %), y también sigue hasta pasar el 45 %: "muy seco" queda memorizado en un relé autoenclavador desde < 15 % hasta > 45 %. Al cortar, sigue 8 s más (retardo a la desconexión). |
 | Detección de falla de riego | Si el aspersor lleva 10 min seguidos y el suelo no se humedeció, hay falta de agua o falla de bomba: se corta el riego automático y se enciende el aviso Q8. La falla queda memorizada (relé autoenclavador) hasta apretar *Reconocer*. |
 | Contador de ciclos de riego | Cuenta los arranques del aspersor del día y se reinicia a las 0:00. Con el séptimo riego enciende el aviso Q8. |
-| Ventilación por etapas | Con más de 28 °C abre la ventana cenital (si no llueve). Si a los 3 min sigue el calor, arranca el ventilador. Con lluvia la ventana no abre y el ventilador entra sin esperar. |
+| Ventilación por etapas | Con más de 28 °C abre la ventana cenital (si no llueve). El ventilador arranca si el calor sigue 3 min, o en el momento si hace más de 30 °C (hasta bajar a 28 °C). Con lluvia la ventana no abre y el ventilador entra sin esperar. |
 | Enclavamientos | El calefactor no funciona con la ventana abierta y el nebulizador no funciona con el ventilador andando. |
 | Calefacción y nebulización | Calefactor con menos de 15 °C (hasta 18 °C). Nebulizador con menos de 50 % de humedad del aire (hasta 65 %). |
 | Luces de cultivo | Con poca radiación solar (< 25 %, hasta 40 %), solo entre las 6 y las 22 h. |
@@ -60,7 +60,8 @@ Las entradas analógicas llegan al PLC como 0 a 1000 (0-10 V). Cada conmutador d
 
 | Bloque | Función | Parámetros |
 |---|---|---|
-| Conmutadores analógicos de umbral | suelo húmedo · suelo > 20 % · templado · calor · temperatura crítica · aire húmedo · hay sol | On / Off: 45/30 · 20/15 · 18/15 · 28/25 · 38/35 · 65/50 · 40/25 |
+| Conmutadores analógicos de umbral | suelo húmedo · suelo muy seco · templado · calor · mucho calor · temperatura crítica · aire húmedo · hay sol | On / Off: 45/30 · 0/15 (ventana: vale 1 con el suelo por debajo de 15 %) · 18/15 · 28/25 · 30/28 · 38/35 · 65/50 · 40/25 |
+| Relé autoenclavador | suelo muy seco (memoria) | S: suelo < 15 % · R: suelo > 45 % |
 | Temporizador semanal | horario de riego | lunes a domingo, 07:00-09:00 y 18:00-20:00 |
 | Temporizador semanal | horario de luces | lunes a domingo, 06:00-22:00 |
 | Temporizador semanal | nuevo día (reinicia el contador) | lunes a domingo, 00:00-00:10 |
@@ -85,9 +86,9 @@ El diagrama se genera con `node simulador-logo/scripts/conexiones-invernadero.mj
 
 | Para ver | Hacer |
 |---|---|
-| Ventilación por etapas | Subir la temperatura exterior a 34 °C: primero abre la ventana (Q4) y a los 3 min simulados arranca el ventilador (Q2). |
+| Ventilación por etapas | Con los valores por defecto (24 °C afuera, 13:00) el interior arranca en unos 29 °C: primero abre la ventana (Q4) y a los 3 min simulados arranca el ventilador (Q2). Con 25 °C o más afuera el interior pasa de 30 °C y el ventilador arranca en el momento. |
 | Lluvia | Activar I4: la ventana se cierra y el ventilador trabaja solo. |
-| Riego por horario | Poner la hora en 8:00 y subir el consumo de agua del cultivo: cuando el suelo baja de 30 % riega hasta 45 %. A las 13:00 no riega hasta que baja de 15 %. |
+| Riego por horario | Poner la hora en 8:00 y subir el consumo de agua del cultivo: cuando el suelo baja de 30 % riega hasta 45 %. A las 13:00 no riega hasta que baja de 15 %, y desde ahí riega hasta pasar el 45 %. |
 | Falla de riego | Hora 8:00, presión de agua 0 % y consumo de agua del cultivo al máximo para que el suelo se seque rápido. Cuando baja de 30 % el aspersor se activa pero el dibujo muestra *SIN AGUA*; a los 10 min simulados se corta y se enciende el aviso Q8. Volver la presión a 100 % y apretar I5. |
 | Contador de riegos | Apretar I2 siete veces (dejando terminar cada riego): con el séptimo se enciende Q8. |
 | Alarma con memoria | Temperatura exterior 42 °C y sol al máximo hasta superar 38 °C adentro; después bajar la temperatura. Q7 sigue encendida hasta apretar I5. |

@@ -44,7 +44,7 @@ function compare(params: Record<string, number>, script: (t: number) => Record<s
 describe('FUP del .lsc contra el KOP del simulador', () => {
   it('tiene las 8 salidas y los mismos bloques de función que el ejemplo', () => {
     expect(fup.blocks.filter((b) => b.kind === 'Output').map((b) => b.id).sort()).toEqual(['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'])
-    expect(fup.blocks.filter((b) => b.kind === 'AnalogTrigger')).toHaveLength(7)
+    expect(fup.blocks.filter((b) => b.kind === 'AnalogTrigger')).toHaveLength(8)
   })
 
   it('un día entero en automático, con calor, riego por horario y el reloj avanzando', () => {
@@ -66,5 +66,9 @@ describe('FUP del .lsc contra el KOP del simulador', () => {
   it('falla de riego sin agua de red, alarma por temperatura crítica y reconocimiento', () => {
     const script = (t: number) => ({ I1: true, I5: t > 9000 && t < 9002 })
     expect(compare({ tempExt: 42, rhExt: 20, hour: 7, sun: 100, wind: 0, evap: 3, supply: 0 }, script, 4 * 3600)).toEqual([])
+  }, 30000)
+
+  it('suelo muy seco fuera de horario: riega desde menos de 15 % hasta pasar el 45 %', () => {
+    expect(compare({ tempExt: 30, rhExt: 30, hour: 12, sun: 90, wind: 10, evap: 3, supply: 100 }, () => ({ I1: true }), 3600)).toEqual([])
   }, 30000)
 })

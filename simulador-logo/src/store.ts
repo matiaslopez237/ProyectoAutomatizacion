@@ -70,9 +70,9 @@ interface AppState {
   resetProcess: () => void
 }
 
-// v2: el circuito de ejemplo del invernadero cambió (riego por horario, alarmas, etapas);
+// v3: el circuito de ejemplo del invernadero cambió (suelo muy seco riega hasta 45 %, ventilador con más de 30 °C);
 // con otra clave, quien tenía guardado el ejemplo viejo recibe el nuevo
-const STORAGE_KEY = 'simulador-logo.v2'
+const STORAGE_KEY = 'simulador-logo.v3'
 
 const snap = (c: Circuit): Circuit => ({ blocks: c.blocks.map((b) => ({ ...b, params: { ...b.params } })), wires: c.wires.map((w) => ({ ...w })) })
 
