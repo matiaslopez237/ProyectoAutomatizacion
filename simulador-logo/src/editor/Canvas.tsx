@@ -11,7 +11,13 @@ import { Glyph } from './Glyph'
 const W = 1000
 
 const fmt = (v: number, d = 1) => v.toFixed(d).replace('.', ',')
+// como LOGO!: hasta 99,99 s en ss:hh s; desde 100 s en minutos mm:ss m
 const fmtTime = (s: number) => {
+  if (s >= 100) {
+    const m = Math.floor(s / 60)
+    const sec = Math.round(s - m * 60)
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}m`
+  }
   const whole = Math.floor(s)
   const cent = Math.round((s - whole) * 100)
   return `${String(whole).padStart(2, '0')}:${String(cent).padStart(2, '0')}s`
