@@ -38,7 +38,43 @@
 
   --font-ui: 'Segoe UI', Tahoma, 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  /* campos de texto, listas y pestaña activa */
+  --field: #ffffff;
+  --tab-active-fg: #0018c8;
   color-scheme: light;
+}
+
+/* modo oscuro (botón del sol): misma estructura de LOGO!Soft con colores apagados */
+:root[data-theme='dark'] {
+  --bg: #12161b;
+  --surface: #1d2329;
+  --surface-2: #272e36;
+  --line: #3a444f;
+  --fg: #e3e8ec;
+  --muted: #98a3ad;
+  --accent: #4c9aff;
+  --accent-fg: #08131f;
+  --hover: #26364a;
+  --hover-line: #4c9aff;
+  --led-off: #48535d;
+  --title-navy: #16233a;
+  --title-slate: #343d47;
+  --tab-strip: #262d35;
+  --canvas: #181c21;
+  --canvas-dot: #3c454f;
+  --rung: #2f373f;
+  --rail: #e8ecef;
+  --wire: #cfd6dc;
+  --live: #ff4a3d;
+  --block: #e4bd5e;
+  --block-line: #9c7a27;
+  --block-ink: #15130c;
+  --param: #6fd47f;
+  --comment: #cfd6db;
+  --select: #ff4a3d;
+  --field: #14181d;
+  --tab-active-fg: #8fb8ff;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -77,23 +113,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.brand-mark {
-  font: 600 11px var(--font-mono);
-  letter-spacing: 0.08em;
-  padding: 3px 6px;
-  border-radius: 3px;
-  background: var(--block);
-  color: var(--block-ink);
-  border: 1px solid var(--block-line);
-}
+.brand { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.theme-toggle { padding: 5px 8px; }
+.theme-toggle[aria-pressed='false'] { color: #d98a00; }
 .appbar-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
 .appbar-field select {
   padding: 5px 8px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #ffffff;
+  background: var(--field);
   color: var(--fg);
 }
 .appbar-run { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; }
@@ -165,7 +193,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   cursor: pointer;
 }
 .panel-toggle:hover { background: var(--hover); }
-.panel-toggle[aria-pressed='true'] { background: #ffffff; color: #0018c8; font-weight: 600; box-shadow: inset 0 2px 0 var(--tab-mark); }
+.panel-toggle[aria-pressed='true'] { background: var(--field); color: var(--tab-active-fg); font-weight: 600; box-shadow: inset 0 2px 0 var(--tab-mark); }
 
 /* barra de título de cada panel */
 .panel-head {
@@ -300,7 +328,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ladder-menu .info { max-height: 45%; }
 .tb.is-on { border-color: var(--accent); color: var(--accent); }
 .tb-menu .chip { margin-left: 2px; padding-inline: 6px; }
-.palette { overflow-y: auto; border-right: 1px solid var(--line); background: #ffffff; padding: 6px 0; font-size: 12.5px; }
+.palette { overflow-y: auto; border-right: 1px solid var(--line); background: var(--field); padding: 6px 0; font-size: 12.5px; }
 .palette details { padding-inline: 6px; }
 .palette summary { font-weight: 600; padding: 4px 4px; cursor: pointer; }
 .palette ul { list-style: none; margin: 0; padding: 0 0 4px 10px; }
@@ -328,6 +356,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .kop-svg { display: block; touch-action: none; user-select: none; }
 .kop-bg { fill: var(--canvas); }
 .kop-griddot { fill: var(--canvas-dot); }
+.kop-block.is-actuator .kop-hit { cursor: pointer; }
+.kop-block.is-actuator:hover .kop-icon { stroke: var(--hover-line); stroke-width: 2; }
 .kop-rung { stroke: var(--rung); stroke-width: 1; pointer-events: none; }
 .kop-handle { fill: var(--select); pointer-events: none; }
 .kop-rail { fill: var(--rail); }
@@ -368,7 +398,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   padding: 3px 12px 4px;
   border: 1px solid var(--line);
   border-bottom: 0;
-  background: #ffffff;
+  background: var(--field);
   box-shadow: inset 0 3px 0 var(--tab-mark);
   font-size: 12px;
 }
@@ -403,6 +433,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fup-stub { stroke: var(--wire); stroke-width: 1.2; }
 .fup-neg { fill: var(--canvas); stroke: var(--wire); stroke-width: 1.2; }
 .fup-body { fill: var(--block); stroke: var(--block-line); stroke-width: 1; }
+.fup-block.is-actuator { cursor: pointer; }
+.fup-block.is-actuator:hover .fup-body { stroke: var(--hover-line); stroke-width: 2; }
 .fup-block.is-on .fup-body { stroke: var(--live); stroke-width: 2; }
 .fup-sym { font: 700 11px var(--font-mono); fill: var(--block-ink); }
 .fup-ink { fill: none; stroke: var(--block-ink); stroke-width: 1.4; }
@@ -461,20 +493,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
 }
-.sim-float .panel-head { padding-left: 22px; }
+.sim-float .panel-head { padding-left: 16px; }
+.panel-head.is-draggable { cursor: move; touch-action: none; }
+.panel-head.is-draggable .panel-btn { cursor: pointer; }
 .sim-float .gh { width: 100%; height: auto; max-height: none; border-radius: 0; }
-.sim-grip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 2;
-  width: 18px;
-  height: 18px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, var(--accent) 0 34%, transparent 34%);
-  touch-action: none;
-}
-.sim-grip:hover, .sim-grip:focus-visible { background: linear-gradient(135deg, var(--accent) 0 48%, transparent 48%); }
+.sim-grip { position: absolute; z-index: 2; width: 16px; height: 16px; touch-action: none; --g: 34%; }
+.sim-grip:hover, .sim-grip:focus-visible { --g: 50%; }
+.sim-grip-nw { top: 0; left: 0; cursor: nwse-resize; background: linear-gradient(135deg, var(--tab-mark) 0 var(--g), transparent var(--g)); }
+.sim-grip-ne { top: 0; right: 0; cursor: nesw-resize; background: linear-gradient(225deg, var(--tab-mark) 0 var(--g), transparent var(--g)); }
+.sim-grip-sw { bottom: 0; left: 0; cursor: nesw-resize; background: linear-gradient(45deg, var(--tab-mark) 0 var(--g), transparent var(--g)); }
+.sim-grip-se { bottom: 0; right: 0; cursor: nwse-resize; background: linear-gradient(315deg, var(--tab-mark) 0 var(--g), transparent var(--g)); }
+.sim-float .panel-btn:last-child { margin-right: 10px; }
 
 /* expandida: menú de controles a la izquierda y la animación ocupando el resto */
 .sketch.is-expanded { flex: 1; min-height: 0; display: flex; }
@@ -511,7 +540,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   padding: 7px 9px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #ffffff;
+  background: var(--field);
   font-size: 16px;
 }
 .field textarea { font: 12px var(--font-mono); resize: vertical; }
@@ -541,7 +570,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .tb span, .tb-hint { display: none; }
   .appbar { gap: 8px 10px; }
   .appbar-run { margin-left: 0; gap: 8px; }
-  .brand { flex-basis: 100%; }
   .appbar-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .info-count { display: none; }
   .info-head > span:first-child { white-space: nowrap; }

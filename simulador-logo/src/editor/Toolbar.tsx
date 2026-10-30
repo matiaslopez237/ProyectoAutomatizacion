@@ -11,6 +11,7 @@ export function Toolbar({ onFile, menuOpen, onMenu }: { onFile: () => void; menu
   const canRedo = useStore((s) => s.future.length > 0)
   const hasSel = useStore((s) => s.selection !== null)
   const armed = useStore((s) => s.armed)
+  const running = useStore((s) => s.running)
   const st = useStore.getState
 
   return (
@@ -50,7 +51,8 @@ export function Toolbar({ onFile, menuOpen, onMenu }: { onFile: () => void; menu
           Clic en el lienzo para colocar el bloque · Esc cancela
         </span>
       )}
-      {!armed && <span className="tb-hint">Arrastrá desde una salida (o desde la barra) hasta una entrada para conectar. Doble clic edita.</span>}
+      {!armed && running && <span className="tb-hint">RUN: hacé clic en un contacto I1, I2… para accionar esa entrada. Para mover o editar esos contactos, pasá a STOP.</span>}
+      {!armed && !running && <span className="tb-hint">Arrastrá desde una salida (o desde la barra) hasta una entrada para conectar. Doble clic edita.</span>}
     </div>
   )
 }

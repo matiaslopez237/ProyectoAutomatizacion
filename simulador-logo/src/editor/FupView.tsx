@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react'
 import type { FupBlock, FupKind, FupProgram, FupResult } from '../plc/fup'
 import { getScenario } from '../scenarios'
+import { actuateInput } from '../sim/inputs'
 import { useStore } from '../store'
 import { DocTab } from '../ui/StatusBar'
 
@@ -58,11 +59,13 @@ function liveLine(b: FupBlock, res: FupResult | null): string | null {
 const FupBlockView = memo(function FupBlockView({ b, on, live }: { b: FupBlock; on: boolean; live: string | null }) {
   const g = body(b)
   const title = b.name ? `${b.id} (${b.name})` : b.id
+  // las entradas digitales se accionan con un clic, como el selector o pulsador real
+  const actuator = b.kind === 'Input'
   const lines = b.paramText ? b.paramText.split('\n') : []
   const timer = b.kind === 'OnDelay' || b.kind === 'OffDelay' || b.kind === 'Clock'
   return (
-    <g className={`fup-block${on ? ' is-on' : ''}`}>
-      <title>{title}</title>
+    <g className={`fup-block${on ? ' is-on' : ''}${actuator ? ' is-actuator' : ''}`} onPointerDown={actuator ? () => actuateInput(b.id) : undefined}>
+      <title>{actuator ? `${title}: clic para accionar` : title}</title>
       <text className="fup-id" x={g.left} y={g.top - 4}>
         {title}
       </text>
@@ -205,7 +208,7 @@ export function FupView() {
           +
         </button>
         <span className="tb-sep" />
-        <span className="tb-hint">Solo lectura. Mientras esta vista está abierta, el proceso lo maneja este programa.</span>
+        <span className="tb-hint">Solo lectura: hacé clic en las entradas I1, I2… para accionarlas. Mientras esta vista está abierta, el proceso lo maneja este programa.</span>
       </div>
       <DocTab file={file ?? prog.source} note="solo lectura" />
       <div className="fup-scroll" tabIndex={0} aria-label="Diagrama de bloques">

@@ -3,6 +3,7 @@ import type { KeyboardEvent, PointerEvent as RPointerEvent } from 'react'
 import { BLOCK_DEFS, isFb } from '../plc/blockDefs'
 import type { Block, BlockEval, BlockType, FbState } from '../plc/types'
 import { RAIL } from '../plc/types'
+import { actuateInput, isDigitalInput } from '../sim/inputs'
 import { useStore } from '../store'
 import { blockSize, inPin, outPin, RAIL_X, snap, wirePath } from './geometry'
 import { Glyph } from './Glyph'
@@ -52,6 +53,7 @@ const BlockView = memo(function BlockView({
   fb,
   running,
   inputOn,
+  actuator,
 }: {
   b: Block
   selected: boolean
@@ -59,6 +61,8 @@ const BlockView = memo(function BlockView({
   fb?: FbState
   running: boolean
   inputOn: boolean
+  /** en RUN, un clic en el contacto acciona su entrada I */
+  actuator: boolean
 }) {
   const { w, h } = blockSize(b)
   const def = BLOCK_DEFS[b.type]
@@ -68,7 +72,13 @@ const BlockView = memo(function BlockView({
   const active = running && !!ev?.out && (b.type !== 'ANA' || inputOn)
 
   return (
-    <g transform={`translate(${b.x} ${b.y})`} className={`kop-block${selected ? ' is-selected' : ''}${active ? ' is-active' : ''}`} data-kind="block" data-id={b.id}>
+    <g
+      transform={`translate(${b.x} ${b.y})`}
+      className={`kop-block${selected ? ' is-selected' : ''}${active ? ' is-active' : ''}${actuator ? ' is-actuator' : ''}`}
+      data-kind="block"
+      data-id={b.id}
+    >
+      {actuator && <title>{`Clic: accionar ${b.op}`}</title>}
       <rect className="kop-hit" x={-2} y={-2} width={w + 4} height={h + 4} data-kind="block" data-id={b.id} />
       {b.comment && (
         <text className="kop-comment" x={fbBlock ? 6 : -4} y={-6}>
@@ -180,6 +190,14 @@ export function Canvas() {
     if (kind === 'wire' && id) {
       st.select({ kind: 'wire', id })
       return
+    }
+    // en RUN los contactos de entradas (I1, I2…) funcionan como el selector o pulsador real
+    if (running && kind === 'block' && id) {
+      const b = byId.get(id)
+      if (b && (b.type === 'NO' || b.type === 'NC') && isDigitalInput(b.op)) {
+        actuateInput(b.op)
+        return
+      }
     }
     if ((kind === 'block' || kind === 'pin-in') && id) {
       // doble clic detectado a mano: con pointer capture el dblclick nativo pierde el bloque
@@ -388,6 +406,7 @@ export function Canvas() {
               fb={result?.state.fb[b.op]}
               running={running && !!result}
               inputOn={!!ev?.inputs[0]}
+              actuator={running && (b.type === 'NO' || b.type === 'NC') && isDigitalInput(b.op)}
             />
           )
         })}

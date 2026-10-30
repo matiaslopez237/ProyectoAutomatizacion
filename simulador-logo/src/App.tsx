@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Canvas } from './editor/Canvas'
 import { FupView } from './editor/FupView'
 import { InfoWindow } from './editor/InfoWindow'
 import { Palette } from './editor/Palette'
 import { PropertiesDialog } from './editor/PropertiesDialog'
 import { Toolbar } from './editor/Toolbar'
-import { SCENARIOS } from './scenarios'
 import { startRuntime } from './sim/runtime'
 import { useStore } from './store'
 import { DocsDialog } from './ui/DocsDialog'
 import { EnvPanel } from './ui/EnvPanel'
 import { FileDialog } from './ui/FileDialog'
+import { FloatingPanel } from './ui/FloatingPanel'
+import { PanelHead } from './ui/PanelHead'
 import { SketchPanel } from './ui/SketchPanel'
 import { programFile } from './ui/programFile'
 import { DocTab, StatusBar } from './ui/StatusBar'
+import { ThemeToggle } from './ui/ThemeToggle'
 
 /** Paneles que se abren y cierran desde la barra. Ladder y Bloques comparten el centro: se ve uno a la vez. */
 type PanelId = 'sliders' | 'ladder' | 'bloques' | 'sim'
@@ -28,21 +30,7 @@ const PANEL_BUTTONS: { id: PanelId; label: string }[] = [
 ]
 
 const PANELS_KEY = 'simulador-logo/paneles'
-const SIM_WIDTH_KEY = 'simulador-logo/sim-ancho'
 const DEFAULT_PANELS: Panels = { sliders: true, center: 'ladder', sim: true }
-// proporción del dibujo del proceso (viewBox 1000 x 420) y alto de la barra de título de la ventana flotante
-const SKETCH_RATIO = 1000 / 420
-const HEAD_H = 31
-
-function loadSimWidth(): number {
-  try {
-    const w = Number(localStorage.getItem(SIM_WIDTH_KEY))
-    if (w >= 280) return w
-  } catch {
-    // sin almacenamiento: ancho por defecto
-  }
-  return 460
-}
 
 function loadPanels(): Panels {
   try {
@@ -95,85 +83,15 @@ function Resizer({ onDrag, label, horizontal = false }: { onDrag: (d: number) =>
   )
 }
 
-/**
- * Agarradera de la esquina superior izquierda de la simulación flotante: como la ventana está anclada
- * abajo a la derecha, arrastrar hacia arriba o a la izquierda la agranda (manteniendo la proporción).
- */
-function CornerGrip({ width, onResize, bounds }: { width: number; onResize: (w: number) => void; bounds: () => { w: number; h: number } }) {
-  const clamp = (w: number) => {
-    const b = bounds()
-    const max = Math.max(280, Math.min(b.w - 24, (b.h - 24 - HEAD_H) * SKETCH_RATIO))
-    return Math.round(Math.min(max, Math.max(280, w)))
-  }
-  return (
-    <div
-      className="sim-grip"
-      role="slider"
-      aria-label="Tamaño de la simulación"
-      aria-valuenow={width}
-      aria-valuemin={280}
-      tabIndex={0}
-      title="Arrastrá para agrandar o achicar"
-      onKeyDown={(e) => {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') onResize(clamp(width + 40))
-        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') onResize(clamp(width - 40))
-      }}
-      onPointerDown={(e) => {
-        const el = e.currentTarget
-        el.setPointerCapture(e.pointerId)
-        const x0 = e.clientX
-        const y0 = e.clientY
-        const w0 = width
-        const move = (ev: PointerEvent) => {
-          const dx = x0 - ev.clientX
-          const dy = (y0 - ev.clientY) * SKETCH_RATIO
-          onResize(clamp(w0 + (Math.abs(dx) > Math.abs(dy) ? dx : dy)))
-        }
-        const up = () => {
-          el.removeEventListener('pointermove', move)
-          el.removeEventListener('pointerup', up)
-        }
-        el.addEventListener('pointermove', move)
-        el.addEventListener('pointerup', up)
-      }}
-    />
-  )
-}
-
-/** Barra de título de un panel: nombre a la izquierda; expandir (opcional) y cerrar a la derecha. */
-function PanelHead({ title, expanded, onExpand, onClose }: { title: string; expanded?: boolean; onExpand?: () => void; onClose: () => void }) {
-  return (
-    <header className="panel-head">
-      <h2>{title}</h2>
-      {onExpand && (
-        <button
-          type="button"
-          className="panel-btn"
-          onClick={onExpand}
-          aria-pressed={expanded}
-          title={expanded ? 'Volver al tablero (Esc)' : 'Expandir'}
-          aria-label={expanded ? `Achicar ${title}` : `Expandir ${title}`}
-        >
-          {expanded ? '⤡' : '⤢'}
-        </button>
-      )}
-      <button type="button" className="panel-btn" onClick={onClose} title="Cerrar" aria-label={`Cerrar ${title}`}>
-        ✕
-      </button>
-    </header>
-  )
-}
-
 export default function App() {
   const running = useStore((s) => s.running)
   const speed = useStore((s) => s.speed)
   const scenarioId = useStore((s) => s.scenarioId)
-  const { setRunning, setSpeed, setScenario, resetProcess } = useStore.getState()
+  const { setRunning, setSpeed, resetProcess } = useStore.getState()
   const [panels, setPanels] = useState(loadPanels)
   // panel maximizado dentro de la ventana (tapa a los demás); null = tablero normal
   const [expanded, setExpanded] = useState<PanelId | null>(null)
   const [left, setLeft] = useState(290)
-  const [simWidth, setSimWidth] = useState(loadSimWidth)
   const [ladderMenu, setLadderMenu] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
   const [fileOpen, setFileOpen] = useState(false)
@@ -188,14 +106,6 @@ export default function App() {
       // sin almacenamiento: el estado de los paneles no se recuerda, nada más
     }
   }, [panels])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SIM_WIDTH_KEY, String(simWidth))
-    } catch {
-      // sin almacenamiento: el tamaño no se recuerda
-    }
-  }, [simWidth])
 
   // el proceso lo maneja el programa que está a la vista en el centro (con el centro vacío, el último que se vio)
   useEffect(() => {
@@ -218,9 +128,8 @@ export default function App() {
   const close = (id: PanelId) => setPanels((p) => (isOpen(p, id) ? toggle(p, id) : p))
   const expandToggle = (id: PanelId) => setExpanded((e) => (e === id ? null : id))
 
-  const panel = (id: PanelId, title: string, className: string, body: ReactNode, canExpand = true, style?: CSSProperties, extra?: ReactNode) => (
-    <section className={`panel ${className}`} aria-label={title} style={style}>
-      {extra}
+  const panel = (id: PanelId, title: string, className: string, body: ReactNode, canExpand = true) => (
+    <section className={`panel ${className}`} aria-label={title}>
       <PanelHead
         title={title}
         expanded={shownExpanded === id}
@@ -252,20 +161,13 @@ export default function App() {
   )
   const bloques = panel('bloques', 'Bloques', 'panel-fup', <FupView />)
   const simExpanded = shownExpanded === 'sim'
-  const sim = panel(
-    'sim',
-    'Sim. en vivo',
-    simExpanded ? 'panel-sketch' : 'panel-sketch sim-float',
-    <SketchPanel expanded={simExpanded} />,
-    true,
-    simExpanded ? undefined : { width: simWidth },
-    simExpanded ? undefined : (
-      <CornerGrip
-        width={simWidth}
-        onResize={setSimWidth}
-        bounds={() => ({ w: mainRef.current?.clientWidth ?? window.innerWidth, h: mainRef.current?.clientHeight ?? window.innerHeight })}
-      />
-    ),
+  // expandida ocupa todo el tablero; si no, es una ventana flotante que se mueve y se redimensiona
+  const sim = simExpanded ? (
+    panel('sim', 'Sim. en vivo', 'panel-sketch', <SketchPanel expanded />)
+  ) : (
+    <FloatingPanel title="Sim. en vivo" boardRef={mainRef} onExpand={() => expandToggle('sim')} onClose={() => close('sim')}>
+      <SketchPanel />
+    </FloatingPanel>
   )
   const byId: Record<PanelId, ReactNode> = { sliders, ladder, bloques, sim }
 
@@ -283,7 +185,7 @@ export default function App() {
       </main>
     )
   } else {
-    // sliders y el panel del centro lado a lado; la simulación flota encima, abajo a la derecha
+    // sliders y el panel del centro lado a lado; la simulación flota encima
     content = (
       <main className="board" ref={mainRef}>
         {top ? (
@@ -315,22 +217,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="appbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            KOP
-          </span>
-          <h1>Simulador LOGO!</h1>
-        </div>
-        <label className="appbar-field">
-          <span>Escenario</span>
-          <select id="scenario" value={scenarioId} onChange={(e) => setScenario(e.target.value)}>
-            {SCENARIOS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <h1 className="brand">Simulador LOGO! · Invernadero automatizado</h1>
         <button type="button" className="btn btn-ghost" onClick={() => setDocsOpen(true)}>
           Conexiones y E/S
         </button>
@@ -368,6 +255,7 @@ export default function App() {
           <button type="button" className="btn btn-ghost" onClick={resetProcess} title="Vuelve el proceso a las condiciones iniciales">
             Reiniciar proceso
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
