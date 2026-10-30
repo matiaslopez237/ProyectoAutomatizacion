@@ -308,7 +308,7 @@ export function Canvas() {
         if (!from) return null
         s = outPin(from)
       }
-      return { w, ...wirePath(s, e) }
+      return { w, ...wirePath(s, e, w.pin) }
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)
 

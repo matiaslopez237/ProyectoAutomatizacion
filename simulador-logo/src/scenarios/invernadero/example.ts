@@ -120,7 +120,8 @@ export function greenhouseExample(): Circuit {
 
   // ===== 9. Alarma con memoria: temperatura crítica o emergencia la activan; queda encendida hasta
   // reconocer con I5, y solo se puede reconocer si la causa desapareció.
-  const alarma = b.add('RS', FB, 2290, undefined, 'alarma (memoria)')
+  // a la altura de "emergencia": los cables de S llegan desde arriba y el de R desde abajo, sin pisarse
+  const alarma = b.add('RS', FB, 2360, undefined, 'alarma (memoria)')
   const aCrit = b.c(crit.op, C0, 2290, 'temp. crítica')
   const aEmer = b.c('I3', C0, 2360, 'emergencia')
   b.wire(null, aCrit)

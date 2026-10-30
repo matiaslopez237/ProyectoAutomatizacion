@@ -24,11 +24,15 @@ export function outPin(b: Block) {
   return { x: b.x + w, y: b.y + PIN_Y + (isFb(b.type) ? (PIN_GAP * (n - 1)) / 2 : 0) }
 }
 
-/** Recorrido ortogonal de un cable, con el codo cerca de la entrada como en LOGO!Soft. */
-export function wirePath(s: { x: number; y: number }, e: { x: number; y: number }) {
-  if (e.x - s.x >= 24) {
+/**
+ * Recorrido ortogonal de un cable, con el codo cerca de la entrada como en LOGO!Soft.
+ * Cada entrada de un bloque dobla en su propia columna (8 px más a la izquierda por entrada),
+ * así los cables que llegan a S y a R de un mismo bloque no se superponen.
+ */
+export function wirePath(s: { x: number; y: number }, e: { x: number; y: number }, pin = 0) {
+  if (e.x - s.x >= 24 + 8 * pin) {
     if (s.y === e.y) return { d: `M${s.x} ${s.y} H${e.x}`, bend: null }
-    const mx = e.x - 12
+    const mx = e.x - 12 - 8 * pin
     return { d: `M${s.x} ${s.y} H${mx} V${e.y} H${e.x}`, bend: { x: mx, y: e.y } }
   }
   // destino a la izquierda: rodea por abajo

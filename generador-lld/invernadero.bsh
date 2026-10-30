@@ -86,7 +86,7 @@ series(d, new Object[]{C(d, "I1", C0, 2120, false, "automático"), C(d, num(humi
 series(d, new Object[]{C(d, "I1", C0, 2200, false, "automático"), C(d, num(sunny), C1, 2200, true, "poca luz"), C(d, num(wLuces), C2, 2200, false, "horario de luces"), C(d, "I3", C3, 2200, true, "emergencia")}, q6);
 
 // 9. alarma con memoria y reconocimiento
-alarma = sfb(d, "LatchingRelayBlock", FB, 2290); lbl(d, alarma, "alarma (memoria)");
+alarma = sfb(d, "LatchingRelayBlock", FB, 2360); lbl(d, alarma, "alarma (memoria)");
 aC = C(d, num(crit), C0, 2290, false, "temp. crítica"); aE = C(d, "I3", C0, 2360, false, "emergencia");
 wire(d, null, aC); wire(d, null, aE); wireIn(d, aC, alarma, 0); wireIn(d, aE, alarma, 0);
 k2 = C(d, "I5", C0, 2430, false, "reconocer"); k2b = C(d, num(crit), C1, 2430, true, "temp. normal"); k2c = C(d, "I3", C2, 2430, true, "sin emergencia");
