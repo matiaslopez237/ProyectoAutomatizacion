@@ -1,0 +1,55 @@
+// Versión FUP (.lsc) del programa del invernadero: toma Ejercicios/Proyecto/Invernadero.lld (correr antes invernadero.bsh)
+// y lo pasa por el mismo conversor KOP -> FUP de LOGO!Soft. Genera Ejercicios/Proyecto/Invernadero.lsc
+// El editor FUP arma una vista Swing (DropTarget), que no anda en modo headless: se desactiva antes de tocar AWT.
+System.setProperty("java.awt.headless", "false");
+source(System.getProperty("gen.dir")+"/lib.bsh");
+import DE.siemens.ad.kop.model.kopfupcompiler.CompilerKopToFup;
+import DE.siemens.ad.pdraw.standard.*;
+import DE.siemens.ad.pdraw.util.LayoutProducer;
+OUT = System.getProperty("repo.dir")+"/Ejercicios/Proyecto/";
+
+kop = loadDrawing(OUT + "Invernadero.lld");
+comp = new CompilerKopToFup(kop.getWiringDiagram());
+wdFup = comp.getFup();
+fup = new LogoDrawing(); fup.setWiringDiagram(wdFup);
+view = new LogoDrawingView(new DE.siemens.ad.pdraw.app.LogoComfort(), 800, 600);
+view.setDrawing(fup);
+// separación entre bloques más grande que la de LOGO!Soft (-75 x 55) para que no se pisen levas y parámetros
+setF(null, "DE.siemens.ad.pdraw.util.LayoutProducer", "HOR_WIDTH", new Integer(-140));
+setF(null, "DE.siemens.ad.pdraw.util.LayoutProducer", "VER_HEIGHT", new Integer(150));
+new LayoutProducer(view, wdFup.getBlocks()).layout();
+
+ion = fup.getInputNamesManager(); ion.copyInputOutputNamesFrom(kop.getInputNamesManager());
+names = new String[][]{{"I1","automático"},{"I2","riego manual"},{"I3","emergencia"},{"I4","lluvia"},{"I5","reconocer"},
+  {"AI1","temperatura"},{"AI2","humedad aire"},{"AI3","humedad suelo"},{"AI4","luz solar"},
+  {"Q1","aspersor"},{"Q2","ventilador"},{"Q3","calefactor"},{"Q4","ventana cenital"},{"Q5","nebulizador"},
+  {"Q6","luces de cultivo"},{"Q7","alarma"},{"Q8","aviso de riego"}};
+for (i=0;i<names.length;i++) ion.setInputName(names[i][0], names[i][1]);
+fup.updateInputNames();
+
+// el conversor no pasa los comentarios: a cada función especial le copia la etiqueta que tiene en el KOP
+// (en KOP se numeran SF001/T011/C014 y en FUP B001/B011/B014: se comparan los dígitos)
+digits(s) { return s.replaceAll("[^0-9]", ""); }
+kopLabel(num) {
+  fl = figList(kop); bf = null;
+  for (i=0;i<fl.size();i++) { f=fl.get(i); if (!(f instanceof DE.siemens.ad.pdraw.figures.BlockFigure)) continue;
+    b = f.getBlock(); if (b instanceof ContactBlock || b instanceof CoilBlock) continue;
+    if (digits(b.getNumberString()).equals(digits(num))) bf = f; }
+  if (bf == null) return null; r = bf.displayBox(); best = null; bd = 20.0;
+  for (i=0;i<fl.size();i++) { f=fl.get(i); if (!(f instanceof DE.siemens.ad.pdraw.figures.CommentTextFigure)) continue;
+    c = f.displayBox(); dd = Math.hypot(c.x - (r.x + 60), c.y - (r.y - 14)); if (dd < bd) { bd = dd; best = f; } }
+  return best == null ? null : best.getText();
+}
+fl = figList(fup);
+for (i=0;i<fl.size();i++) { f=fl.get(i); if (!(f instanceof DE.siemens.ad.pdraw.figures.BlockFigure)) continue;
+  b = f.getBlock(); if (b.getClass().getName().matches(".*[.](Input|AnalogInput|Output|And|Or|Not)Block")) continue;
+  t = kopLabel(b.getNumberString()); if (t == null) continue;
+  r = f.displayBox(); comment(fup, t, r.x, r.y - 16); }
+comment(fup, "Invernadero automatizado - I1 auto | I2 riego manual | I3 emergencia | I4 lluvia | I5 reconocer", 860, 4);
+
+saveDrawing(fup, OUT + "Invernadero.lsc");
+print("== Invernadero.lsc");
+d2 = loadDrawing(OUT + "Invernadero.lsc");
+print("bloques: " + d2.getWiringDiagram().getBlocks().size());
+dumpModel(d2);
+System.exit(0);
