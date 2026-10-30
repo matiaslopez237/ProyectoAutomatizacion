@@ -3,7 +3,8 @@
 import { writeFileSync } from 'node:fs'
 
 const W = 1280
-const H = 900
+// alto total: llega hasta el recuadro de referencias (4 filas de 3 columnas) con margen abajo
+const H = 940
 const out = []
 const add = (s) => out.push(s)
 
@@ -197,8 +198,11 @@ const legend = [
   'K1 a K6  contactores 220 V CA (con guardamotor en motores)',
   'H1  baliza y sirena 24 V CC · H2  piloto ámbar 24 V CC',
 ]
-add(`<rect x="30" y="${YN + 40}" width="${W - 60}" height="${H - YN - 52}" rx="4" fill="${C.box}" stroke="${C.muted}" stroke-width="1"/>`)
-legend.forEach((l, i) => text(46 + (i % 3) * 405, YN + 60 + Math.floor(i / 3) * 16, l, { size: 11, anchor: 'start' }))
+// el recuadro toma el alto de las filas que tenga, así ninguna queda sobre el borde
+const LEG_ROW = 18
+const legRows = Math.ceil(legend.length / 3)
+add(`<rect x="30" y="${YN + 40}" width="${W - 60}" height="${legRows * LEG_ROW + 20}" rx="4" fill="${C.box}" stroke="${C.muted}" stroke-width="1"/>`)
+legend.forEach((l, i) => text(46 + (i % 3) * 405, YN + 62 + Math.floor(i / 3) * LEG_ROW, l, { size: 11, anchor: 'start' }))
 
 add('</svg>')
 writeFileSync('src/scenarios/invernadero/conexiones.svg', out.join('\n'))
