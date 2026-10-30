@@ -4,7 +4,7 @@ import { RAIL } from './types'
 export const emptyPlcState = (): PlcState => ({ image: {}, fb: {} })
 
 /** Histéresis de los bloques analógicos y del contador (On >= Off, como en LOGO!). */
-function hysteresis(value: number, on: number, off: number, prev: boolean): boolean {
+export function hysteresis(value: number, on: number, off: number, prev: boolean): boolean {
   if (on >= off) {
     if (value > on) return true
     if (value <= off) return false
@@ -15,7 +15,7 @@ function hysteresis(value: number, on: number, off: number, prev: boolean): bool
 }
 
 /** Una leva del temporizador semanal: conexión ≤ hora < desconexión (puede cruzar la medianoche). Igual conexión y desconexión = leva sin usar. */
-function inWindow(h: number, on: number, off: number): boolean {
+export function inWindow(h: number, on: number, off: number): boolean {
   if (on === off) return false
   return on < off ? h >= on && h < off : h >= on || h < off
 }

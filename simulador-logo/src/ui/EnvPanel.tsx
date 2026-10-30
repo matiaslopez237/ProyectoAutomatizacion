@@ -1,6 +1,6 @@
 import { getScenario } from '../scenarios'
 import type { SensorDef } from '../scenarios/types'
-import { useStore } from '../store'
+import { selectOutputs, useStore } from '../store'
 
 const fmt = (v: number, d = 1) => v.toFixed(d).replace('.', ',')
 const fmtHour = (h: number) => {
@@ -49,120 +49,173 @@ function SensorRow({ s }: { s: SensorDef<unknown> }) {
   )
 }
 
-export function EnvPanel() {
+/** Sliders del entorno (clima, hora, agua…). */
+export function EnvSliders() {
   const scenarioId = useStore((s) => s.scenarioId)
   const params = useStore((s) => s.params)
-  const digital = useStore((s) => s.digital)
-  const outputs = useStore((s) => s.sim.result?.outputs)
   const clockOn = useStore((s) => s.clockOn)
   const sc = getScenario(scenarioId)
-  const { setParam, setDigital, setClockOn } = useStore.getState()
+  const { setParam, setClockOn } = useStore.getState()
+  return (
+    <>
+      {sc.sliders.map((sl) => (
+        <div className="slider" key={sl.key}>
+          <label htmlFor={`sl-${sl.key}`}>
+            <span>{sl.label}</span>
+            <output htmlFor={`sl-${sl.key}`}>
+              {sl.format === 'time' ? (params[sl.key] >= 24 ? '24:00' : fmtHour(params[sl.key])) : `${fmt(params[sl.key], sl.step < 1 ? 1 : 0)} ${sl.unit}`}
+            </output>
+          </label>
+          <input
+            id={`sl-${sl.key}`}
+            type="range"
+            min={sl.min}
+            max={sl.max}
+            step={sl.step}
+            value={params[sl.key]}
+            onChange={(e) => setParam(sl.key, Number(e.target.value))}
+          />
+          {sl.clock && (
+            <div className="clock">
+              <button
+                type="button"
+                className={`btn btn-small${clockOn ? ' is-on' : ''}`}
+                aria-pressed={clockOn}
+                disabled={!clockOn && params[sl.key] >= sl.max}
+                onClick={() => setClockOn(!clockOn)}
+              >
+                {clockOn ? '❚❚ Pausar el reloj' : '▶ Avanzar hasta medianoche'}
+              </button>
+              <small>{clockOn ? 'Avanza con la velocidad de simulación.' : params[sl.key] >= sl.max ? 'Llegó a medianoche: mové el slider para seguir.' : 'Desde la hora del slider.'}</small>
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  )
+}
 
+/** Selectores y pulsadores de las entradas digitales. */
+export function DigitalInputs() {
+  const scenarioId = useStore((s) => s.scenarioId)
+  const digital = useStore((s) => s.digital)
+  const sc = getScenario(scenarioId)
+  const { setDigital } = useStore.getState()
+  return (
+    <ul className="inputs">
+      {sc.digital.map((d) => (
+        <li key={d.op}>
+          {d.kind === 'switch' ? (
+            <label className="switch">
+              <input id={`in-${d.op}`} type="checkbox" checked={!!digital[d.op]} onChange={(e) => setDigital(d.op, e.target.checked)} />
+              <span className="switch-track" aria-hidden="true" />
+              <span className="op">{d.op}</span>
+              <span className="in-label">
+                {d.label}
+                {d.hint && <small>{d.hint}</small>}
+              </span>
+            </label>
+          ) : (
+            <div className="switch">
+              <button
+                id={`in-${d.op}`}
+                type="button"
+                className={`push${digital[d.op] ? ' is-down' : ''}`}
+                aria-pressed={!!digital[d.op]}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId)
+                  setDigital(d.op, true)
+                }}
+                onPointerUp={() => setDigital(d.op, false)}
+                onPointerCancel={() => setDigital(d.op, false)}
+                onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && setDigital(d.op, true)}
+                onKeyUp={() => setDigital(d.op, false)}
+              >
+                <span className="sr-only">{d.label}</span>
+              </button>
+              <span className="op">{d.op}</span>
+              <span className="in-label">
+                {d.label}
+                {d.hint && <small>{d.hint}</small>}
+              </span>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Valor de cada sensor analógico; con curva en el panel completo, en una línea en el mini menú. */
+export function SensorList({ compact = false }: { compact?: boolean }) {
+  const scenarioId = useStore((s) => s.scenarioId)
+  const phys = useStore((st) => st.sim.phys)
+  const params = useStore((st) => st.params)
+  const sc = getScenario(scenarioId)
+  if (!compact) {
+    return (
+      <ul className="sensors">
+        {sc.sensors.map((s) => (
+          <SensorRow key={s.op} s={s} />
+        ))}
+      </ul>
+    )
+  }
+  return (
+    <ul className="sensors-compact">
+      {sc.sensors.map((s) => (
+        <li key={s.op}>
+          <span className="op">{s.op}</span>
+          <span>{s.label}</span>
+          <output>
+            {fmt(s.read(phys, params))} {s.unit}
+          </output>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Luces de las salidas Q del programa que maneja el proceso. */
+export function OutputLeds() {
+  const scenarioId = useStore((s) => s.scenarioId)
+  const outputs = useStore(selectOutputs)
+  const sc = getScenario(scenarioId)
+  return (
+    <ul className="outputs">
+      {sc.outputs.map((o) => (
+        <li key={o.op} className={outputs?.[o.op] ? 'is-on' : ''}>
+          <span className="led" aria-hidden="true" />
+          <span className="op">{o.op}</span>
+          <span>{o.label}</span>
+          <span className="sr-only">{outputs?.[o.op] ? 'encendida' : 'apagada'}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function EnvPanel() {
   return (
     <div className="env">
       <section className="env-sec">
         <h3>Entorno</h3>
-        {sc.sliders.map((sl) => (
-          <div className="slider" key={sl.key}>
-            <label htmlFor={`sl-${sl.key}`}>
-              <span>{sl.label}</span>
-              <output htmlFor={`sl-${sl.key}`}>
-                {sl.format === 'time' ? (params[sl.key] >= 24 ? '24:00' : fmtHour(params[sl.key])) : `${fmt(params[sl.key], sl.step < 1 ? 1 : 0)} ${sl.unit}`}
-              </output>
-            </label>
-            <input
-              id={`sl-${sl.key}`}
-              type="range"
-              min={sl.min}
-              max={sl.max}
-              step={sl.step}
-              value={params[sl.key]}
-              onChange={(e) => setParam(sl.key, Number(e.target.value))}
-            />
-            {sl.clock && (
-              <div className="clock">
-                <button
-                  type="button"
-                  className={`btn btn-small${clockOn ? ' is-on' : ''}`}
-                  aria-pressed={clockOn}
-                  disabled={!clockOn && params[sl.key] >= sl.max}
-                  onClick={() => setClockOn(!clockOn)}
-                >
-                  {clockOn ? '❚❚ Pausar el reloj' : '▶ Avanzar hasta medianoche'}
-                </button>
-                <small>{clockOn ? 'Avanza con la velocidad de simulación.' : params[sl.key] >= sl.max ? 'Llegó a medianoche: mové el slider para seguir.' : 'Desde la hora del slider.'}</small>
-              </div>
-            )}
-          </div>
-        ))}
+        <EnvSliders />
       </section>
 
       <section className="env-sec">
         <h3>Entradas digitales</h3>
-        <ul className="inputs">
-          {sc.digital.map((d) => (
-            <li key={d.op}>
-              {d.kind === 'switch' ? (
-                <label className="switch">
-                  <input id={`in-${d.op}`} type="checkbox" checked={!!digital[d.op]} onChange={(e) => setDigital(d.op, e.target.checked)} />
-                  <span className="switch-track" aria-hidden="true" />
-                  <span className="op">{d.op}</span>
-                  <span className="in-label">
-                    {d.label}
-                    {d.hint && <small>{d.hint}</small>}
-                  </span>
-                </label>
-              ) : (
-                <div className="switch">
-                  <button
-                    id={`in-${d.op}`}
-                    type="button"
-                    className={`push${digital[d.op] ? ' is-down' : ''}`}
-                    aria-pressed={!!digital[d.op]}
-                    onPointerDown={(e) => {
-                      e.currentTarget.setPointerCapture(e.pointerId)
-                      setDigital(d.op, true)
-                    }}
-                    onPointerUp={() => setDigital(d.op, false)}
-                    onPointerCancel={() => setDigital(d.op, false)}
-                    onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && setDigital(d.op, true)}
-                    onKeyUp={() => setDigital(d.op, false)}
-                  >
-                    <span className="sr-only">{d.label}</span>
-                  </button>
-                  <span className="op">{d.op}</span>
-                  <span className="in-label">
-                    {d.label}
-                    {d.hint && <small>{d.hint}</small>}
-                  </span>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DigitalInputs />
       </section>
 
       <section className="env-sec">
         <h3>Sensores analógicos</h3>
-        <ul className="sensors">
-          {sc.sensors.map((s) => (
-            <SensorRow key={s.op} s={s} />
-          ))}
-        </ul>
+        <SensorList />
       </section>
 
       <section className="env-sec">
         <h3>Salidas</h3>
-        <ul className="outputs">
-          {sc.outputs.map((o) => (
-            <li key={o.op} className={outputs?.[o.op] ? 'is-on' : ''}>
-              <span className="led" aria-hidden="true" />
-              <span className="op">{o.op}</span>
-              <span>{o.label}</span>
-              <span className="sr-only">{outputs?.[o.op] ? 'encendida' : 'apagada'}</span>
-            </li>
-          ))}
-        </ul>
+        <OutputLeds />
       </section>
     </div>
   )

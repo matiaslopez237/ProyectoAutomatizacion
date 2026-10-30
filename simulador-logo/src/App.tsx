@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Canvas } from './editor/Canvas'
+import { FupView } from './editor/FupView'
 import { InfoWindow } from './editor/InfoWindow'
 import { Palette } from './editor/Palette'
 import { PropertiesDialog } from './editor/PropertiesDialog'
@@ -25,7 +26,21 @@ const PANEL_BUTTONS: { id: PanelId; label: string }[] = [
 ]
 
 const PANELS_KEY = 'simulador-logo/paneles'
+const SIM_WIDTH_KEY = 'simulador-logo/sim-ancho'
 const DEFAULT_PANELS: Panels = { sliders: true, center: 'ladder', sim: true }
+// proporción del dibujo del proceso (viewBox 1000 x 420) y alto de la barra de título de la ventana flotante
+const SKETCH_RATIO = 1000 / 420
+const HEAD_H = 31
+
+function loadSimWidth(): number {
+  try {
+    const w = Number(localStorage.getItem(SIM_WIDTH_KEY))
+    if (w >= 280) return w
+  } catch {
+    // sin almacenamiento: ancho por defecto
+  }
+  return 460
+}
 
 function loadPanels(): Panels {
   try {
@@ -78,6 +93,51 @@ function Resizer({ onDrag, label, horizontal = false }: { onDrag: (d: number) =>
   )
 }
 
+/**
+ * Agarradera de la esquina superior izquierda de la simulación flotante: como la ventana está anclada
+ * abajo a la derecha, arrastrar hacia arriba o a la izquierda la agranda (manteniendo la proporción).
+ */
+function CornerGrip({ width, onResize, bounds }: { width: number; onResize: (w: number) => void; bounds: () => { w: number; h: number } }) {
+  const clamp = (w: number) => {
+    const b = bounds()
+    const max = Math.max(280, Math.min(b.w - 24, (b.h - 24 - HEAD_H) * SKETCH_RATIO))
+    return Math.round(Math.min(max, Math.max(280, w)))
+  }
+  return (
+    <div
+      className="sim-grip"
+      role="slider"
+      aria-label="Tamaño de la simulación"
+      aria-valuenow={width}
+      aria-valuemin={280}
+      tabIndex={0}
+      title="Arrastrá para agrandar o achicar"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') onResize(clamp(width + 40))
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') onResize(clamp(width - 40))
+      }}
+      onPointerDown={(e) => {
+        const el = e.currentTarget
+        el.setPointerCapture(e.pointerId)
+        const x0 = e.clientX
+        const y0 = e.clientY
+        const w0 = width
+        const move = (ev: PointerEvent) => {
+          const dx = x0 - ev.clientX
+          const dy = (y0 - ev.clientY) * SKETCH_RATIO
+          onResize(clamp(w0 + (Math.abs(dx) > Math.abs(dy) ? dx : dy)))
+        }
+        const up = () => {
+          el.removeEventListener('pointermove', move)
+          el.removeEventListener('pointerup', up)
+        }
+        el.addEventListener('pointermove', move)
+        el.addEventListener('pointerup', up)
+      }}
+    />
+  )
+}
+
 /** Barra de título de un panel: nombre a la izquierda; expandir (opcional) y cerrar a la derecha. */
 function PanelHead({ title, expanded, onExpand, onClose }: { title: string; expanded?: boolean; onExpand?: () => void; onClose: () => void }) {
   return (
@@ -111,8 +171,9 @@ export default function App() {
   // panel maximizado dentro de la ventana (tapa a los demás); null = tablero normal
   const [expanded, setExpanded] = useState<PanelId | null>(null)
   const [left, setLeft] = useState(290)
-  const maxBottom = () => Math.max(260, window.innerHeight - 290)
-  const [bottom, setBottom] = useState(() => Math.round(Math.max(260, window.innerHeight * 0.5)))
+  const [simWidth, setSimWidth] = useState(loadSimWidth)
+  const [ladderMenu, setLadderMenu] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
   const [fileOpen, setFileOpen] = useState(false)
   const [docsOpen, setDocsOpen] = useState(false)
 
@@ -125,6 +186,19 @@ export default function App() {
       // sin almacenamiento: el estado de los paneles no se recuerda, nada más
     }
   }, [panels])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIM_WIDTH_KEY, String(simWidth))
+    } catch {
+      // sin almacenamiento: el tamaño no se recuerda
+    }
+  }, [simWidth])
+
+  // el proceso lo maneja el programa que está a la vista en el centro (con el centro vacío, el último que se vio)
+  useEffect(() => {
+    if (panels.center) useStore.getState().setProgram(panels.center === 'bloques' ? 'fup' : 'ladder')
+  }, [panels.center])
 
   // un panel cerrado no puede quedar maximizado
   const shownExpanded = expanded && isOpen(panels, expanded) ? expanded : null
@@ -142,8 +216,9 @@ export default function App() {
   const close = (id: PanelId) => setPanels((p) => (isOpen(p, id) ? toggle(p, id) : p))
   const expandToggle = (id: PanelId) => setExpanded((e) => (e === id ? null : id))
 
-  const panel = (id: PanelId, title: string, className: string, body: ReactNode, canExpand = true) => (
-    <section className={`panel ${className}`} aria-label={title}>
+  const panel = (id: PanelId, title: string, className: string, body: ReactNode, canExpand = true, style?: CSSProperties, extra?: ReactNode) => (
+    <section className={`panel ${className}`} aria-label={title} style={style}>
+      {extra}
       <PanelHead
         title={title}
         expanded={shownExpanded === id}
@@ -160,23 +235,35 @@ export default function App() {
     'Ladder',
     'panel-editor',
     <>
-      <Toolbar onFile={() => setFileOpen(true)} />
-      <div className="editor-body">
-        <Palette />
+      <Toolbar onFile={() => setFileOpen(true)} menuOpen={ladderMenu} onMenu={() => setLadderMenu(!ladderMenu)} />
+      <div className={`editor-body${ladderMenu ? '' : ' no-menu'}`}>
+        {ladderMenu && (
+          <div className="ladder-menu" id="ladder-menu">
+            <Palette />
+            <InfoWindow />
+          </div>
+        )}
         <Canvas />
       </div>
-      <InfoWindow />
     </>,
   )
-  const bloques = panel(
-    'bloques',
-    'Bloques',
-    'panel-fup',
-    <div className="panel-empty">
-      <p>La vista de bloques (FUP) del programa del invernadero llega en una próxima etapa.</p>
-    </div>,
+  const bloques = panel('bloques', 'Bloques', 'panel-fup', <FupView />)
+  const simExpanded = shownExpanded === 'sim'
+  const sim = panel(
+    'sim',
+    'Sim. en vivo',
+    simExpanded ? 'panel-sketch' : 'panel-sketch sim-float',
+    <SketchPanel expanded={simExpanded} />,
+    true,
+    simExpanded ? undefined : { width: simWidth },
+    simExpanded ? undefined : (
+      <CornerGrip
+        width={simWidth}
+        onResize={setSimWidth}
+        bounds={() => ({ w: mainRef.current?.clientWidth ?? window.innerWidth, h: mainRef.current?.clientHeight ?? window.innerHeight })}
+      />
+    ),
   )
-  const sim = panel('sim', 'Sim. en vivo', 'panel-sketch', <SketchPanel />)
   const byId: Record<PanelId, ReactNode> = { sliders, ladder, bloques, sim }
 
   const center = panels.center === 'ladder' ? ladder : panels.center === 'bloques' ? bloques : null
@@ -193,11 +280,10 @@ export default function App() {
       </main>
     )
   } else {
-    // arriba: sliders y el panel del centro lado a lado; abajo: la simulación a todo el ancho
-    const rows = [top ? 'minmax(220px, 1fr)' : null, top && panels.sim ? '6px' : null, panels.sim ? (top ? `${bottom}px` : '1fr') : null]
+    // sliders y el panel del centro lado a lado; la simulación flota encima, abajo a la derecha
     content = (
-      <main className="rows" style={{ gridTemplateRows: rows.filter(Boolean).join(' ') }}>
-        {top && (
+      <main className="board" ref={mainRef}>
+        {top ? (
           <div
             className="cols"
             style={{ gridTemplateColumns: panels.sliders && center ? `${left}px 6px minmax(360px, 1fr)` : center ? '1fr' : `${left}px 1fr` }}
@@ -213,13 +299,10 @@ export default function App() {
               </div>
             )}
           </div>
-        )}
-        {top && panels.sim && (
-          <Resizer
-            horizontal
-            label="Alto del panel de simulación"
-            onDrag={(dy) => setBottom((h) => Math.min(maxBottom(), Math.max(160, h - dy)))}
-          />
+        ) : (
+          <div className="panel-empty">
+            <p>Abrí Sliders, Ladder o Bloques desde la barra de arriba.</p>
+          </div>
         )}
         {panels.sim && sim}
       </main>

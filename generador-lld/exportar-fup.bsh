@@ -1,0 +1,107 @@
+// Exporta Ejercicios/Proyecto/Invernadero.lsc (FUP) a JSON para la vista "Bloques" del simulador web:
+// bloques con su posición, entradas (de qué bloque vienen y si están negadas), parámetros, cables con sus
+// quiebres, comentarios y nombres de E/S. Genera simulador-logo/src/scenarios/invernadero/fup.json
+source(System.getProperty("gen.dir")+"/lib.bsh");
+REPO = System.getProperty("repo.dir");
+d = loadDrawing(REPO + "/Ejercicios/Proyecto/Invernadero.lsc");
+
+q(s) {
+  s = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+  return "\"" + s + "\"";
+}
+join(sep, list) { sb = new StringBuilder(); for (n=0;n<list.size();n++) { if (n > 0) sb.append(sep); sb.append(list.get(n)); } return sb.toString(); }
+box(r) { return "[" + r.x + "," + r.y + "," + r.width + "," + r.height + "]"; }
+kind(b) { return b.getClass().getName().replaceAll(".*[.]", "").replace("Block", ""); }
+// "08:00s+" = ss:cc (segundos), "10:00m+" = mm:ss, "02:30h+" = hh:mm  ->  segundos
+seconds(text) {
+  m = java.util.regex.Pattern.compile("(\\d+):(\\d+)([smh])").matcher(text);
+  if (!m.find()) return 0.0;
+  a = Integer.parseInt(m.group(1)); b = Integer.parseInt(m.group(2)); u = m.group(3);
+  if (u.equals("s")) return a + b / 100.0;
+  if (u.equals("m")) return a * 60.0 + b;
+  return a * 3600.0 + b * 60.0;
+}
+hours(t) {
+  m = java.util.regex.Pattern.compile("(\\d+):(\\d+)").matcher("" + t);
+  if (!m.find()) return null;
+  return Integer.parseInt(m.group(1)) + Integer.parseInt(m.group(2)) / 60.0;
+}
+num(text, key) {
+  m = java.util.regex.Pattern.compile(key + "=(-?[\\d.]+)").matcher(text);
+  return m.find() ? m.group(1) : "0";
+}
+
+// figuras de entradas y salidas de cada bloque, para reconocer los extremos de los cables
+ifcOwner = new java.util.IdentityHashMap();
+names = d.getInputNamesManager();
+blocksJson = new ArrayList();
+figs = figList(d);
+for (i=0;i<figs.size();i++) {
+  f = figs.get(i);
+  if (!(f instanceof DE.siemens.ad.pdraw.figures.BlockFigure)) continue;
+  b = f.getBlock(); id = b.getNumberString(); k = kind(b);
+  ins = new ArrayList(); conns = b.getInConnectors(); ifcs = f.getInputIfcFigures();
+  for (j=0; conns != null && j<conns.length; j++) {
+    c = conns[j]; lc = c.getLinkedConnectorsList();
+    src = lc.size() > 0 ? lc.get(0).getOwner().getNumberString() : null;
+    neg = getF(c, "DE.siemens.ad.logo.model.BlockConnector", "fNegated");
+    fi = f.getInputIfcFigure(c);
+    if (fi != null) ifcOwner.put(fi, new Object[]{ id, "in", j });
+    ins.add("{\"from\":" + (src == null ? "null" : q(src)) + ",\"neg\":" + neg + ",\"box\":" + (fi == null ? "null" : box(fi.displayBox())) + "}");
+  }
+  outs = f.getOutputIfcFigures(); outBox = "null";
+  for (j=0;j<outs.size();j++) { ifcOwner.put(outs.get(j), new Object[]{ id, "out", j }); if (j == 0) outBox = box(outs.get(j).displayBox()); }
+
+  ptext = ""; pbox = "null";
+  p = null; try { p = b.getParameter(); } catch (e) {}
+  if (p != null) { try { ptext = p.getParameterText(); } catch (e) {} }
+  ptf = f.getParameterTextFigure();
+  if (ptf != null && ptext.length() > 0) pbox = box(ptf.displayBox());
+  params = "{}";
+  if (k.equals("OnDelay") || k.equals("OffDelay")) params = "{\"T\":" + seconds(ptext) + "}";
+  else if (k.equals("AnalogTrigger"))
+    params = "{\"gain\":" + num(ptext, "Gain") + ",\"offset\":" + num(ptext, "Offset") + ",\"On\":" + num(ptext, "On") + ",\"Off\":" + num(ptext, "Off") + "}";
+  else if (k.equals("Counter")) params = "{\"On\":" + num(ptext, "On") + ",\"Off\":" + num(ptext, "Off") + "}";
+  else if (k.equals("Clock")) {
+    cams = "";
+    for (j=0;j<p.getCamCount();j++) {
+      cam = p.getCam(j); on = hours(cam.getOnTime()); off = hours(cam.getOffTime());
+      if (on == null || off == null) continue;
+      cams += (cams.length() > 0 ? "," : "") + "[" + on + "," + off + "]";
+    }
+    params = "{\"cams\":[" + cams + "]}";
+  }
+  name = names.getInputName(id);
+  blocksJson.add("{\"id\":" + q(id) + ",\"kind\":" + q(k) + ",\"box\":" + box(f.displayBox())
+    + (name != null && name.length() > 0 && !name.equals(id) ? ",\"name\":" + q(name) : "")
+    + ",\"inputs\":[" + join(",", ins) + "],\"out\":" + outBox
+    + ",\"params\":" + params + ",\"paramText\":" + q(ptext) + ",\"paramBox\":" + pbox + "}");
+}
+
+wiresJson = new ArrayList(); commentsJson = new ArrayList();
+for (i=0;i<figs.size();i++) {
+  f = figs.get(i);
+  if (f instanceof DE.siemens.ad.pdraw.figures.CommentTextFigure) {
+    r = f.displayBox(); commentsJson.add("{\"text\":" + q(f.getText()) + ",\"x\":" + r.x + ",\"y\":" + r.y + "}");
+    continue;
+  }
+  if (!(f instanceof CH.ifa.draw.framework.ConnectionFigure)) continue;
+  a = ifcOwner.get(f.startFigure()); z = ifcOwner.get(f.endFigure());
+  if (a == null || z == null) { print("cable sin extremos reconocidos"); continue; }
+  if (a[1].equals("in")) { t = a; a = z; z = t; }
+  pts = "";
+  for (j=0;j<f.pointCount();j++) { pt = f.pointAt(j); pts += (j > 0 ? "," : "") + "[" + pt.x + "," + pt.y + "]"; }
+  wiresJson.add("{\"from\":" + q(a[0]) + ",\"to\":" + q(z[0]) + ",\"pin\":" + z[2] + ",\"points\":[" + pts + "]}");
+}
+
+out = new StringBuilder();
+out.append("{\n  \"source\": \"Ejercicios/Proyecto/Invernadero.lsc\",\n  \"blocks\": [\n    ");
+out.append(join(",\n    ", blocksJson));
+out.append("\n  ],\n  \"wires\": [\n    ");
+out.append(join(",\n    ", wiresJson));
+out.append("\n  ],\n  \"comments\": [\n    ");
+out.append(join(",\n    ", commentsJson));
+out.append("\n  ]\n}\n");
+path = REPO + "/simulador-logo/src/scenarios/invernadero/fup.json";
+w = new OutputStreamWriter(new FileOutputStream(path), "UTF-8"); w.write(out.toString()); w.close();
+print("== fup.json: " + blocksJson.size() + " bloques, " + wiresJson.size() + " cables, " + commentsJson.size() + " comentarios");

@@ -1,3 +1,4 @@
+import { scanFup } from '../plc/fup'
 import { scan } from '../plc/scan'
 import type { PlcInputs } from '../plc/types'
 import { getScenario } from '../scenarios'
@@ -38,6 +39,9 @@ function tick() {
   let phys = st.sim.phys
   let plc = st.sim.plc
   let result = st.sim.result
+  let fupState = st.sim.fupState
+  let fup = st.sim.fup
+  const useFup = st.program === 'fup' && !!scenario.fup
   // reloj del día: avanza con el tiempo simulado y se detiene al llegar al máximo (medianoche)
   const clock = st.clockOn ? scenario.sliders.find((s) => s.clock) : undefined
   let params = st.params
@@ -57,8 +61,14 @@ function tick() {
     if (st.running) {
       result = scan(st.circuit, plc, inputs, dt)
       plc = result.state
+      if (scenario.fup) {
+        fup = scanFup(scenario.fup, fupState, inputs, dt)
+        fupState = fup.state
+      }
     }
-    phys = scenario.step(phys, st.running && result ? result.outputs : {}, params, st.digital, dt)
+    // el proceso lo mueve el programa que está a la vista: el KOP o el FUP
+    const outputs = !st.running ? {} : useFup ? (fup?.outputs ?? {}) : (result?.outputs ?? {})
+    phys = scenario.step(phys, outputs, params, st.digital, dt)
     if (clock && !clockOn) break
   }
 
@@ -75,7 +85,7 @@ function tick() {
     }
   }
 
-  const sim = { result: st.running ? result : null, plc, phys, t, history }
+  const sim = { result: st.running ? result : null, plc, fup: st.running ? fup : null, fupState, phys, t, history }
   if (clock) useStore.setState({ sim, params, clockOn })
   else useStore.setState({ sim })
 }

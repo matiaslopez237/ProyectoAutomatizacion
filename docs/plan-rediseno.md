@@ -20,21 +20,21 @@ Rama: `rediseno-paneles`. Solo escritorio (no se adapta a celulares). GitHub Pag
 - [x] Igual que ahora, con el ancho ajustable.
 
 ## 4. Ladder (centro)
-- [ ] Se sigue pudiendo editar el circuito.
-- [ ] Paleta de bloques e Info Window en un **menú plegable** (arranca cerrado).
-- [ ] Queda la barra de herramientas (deshacer, zoom, archivo).
+- [x] Se sigue pudiendo editar el circuito.
+- [x] Paleta de bloques e Info Window en un **menú plegable** (botón "☰ Bloques e info", arranca cerrado; si el programa tiene errores, el botón muestra cuántos).
+- [x] Queda la barra de herramientas (deshacer, zoom, archivo).
 
 ## 5. Bloques / FUP (centro, solo ver y simular)
-- [ ] Script en `generador-lld/` que lee `Ejercicios/Proyecto/Invernadero.lsc` con las clases de LOGO!Soft y exporta un JSON (bloques, posiciones, conexiones, negaciones, parámetros, etiquetas y nombres de E/S) dentro del simulador.
-- [ ] Vista con el estilo FUP de LOGO!Soft: grilla de puntos, bloques amarillos numerados, entradas negadas con circulito, parámetros en verde.
-- [ ] En simulación pinta cables y bloques según su estado: las funciones especiales (B001 = SF001, B011 = T011…) toman el estado de la simulación en curso y los AND/OR se calculan en el momento.
-- [ ] Test: el FUP da las mismas salidas que el ladder.
-- [ ] Sin edición; zoom y desplazamiento.
+- [x] `generador-lld/exportar-fup.bsh` lee `Ejercicios/Proyecto/Invernadero.lsc` con las clases de LOGO!Soft y escribe `simulador-logo/src/scenarios/invernadero/fup.json` (bloques, posiciones, cables con quiebres, negaciones, parámetros, comentarios y nombres de E/S).
+- [x] Vista con el estilo FUP de LOGO!Soft: grilla de puntos, bloques amarillos numerados, entradas negadas con circulito, parámetros en verde.
+- [x] En simulación pinta cables y bloques según su estado y muestra T, Cnt y Ax en vivo. Decisión: el FUP tiene su propio motor (`src/plc/fup.ts`) y corre siempre a la par del KOP con las mismas entradas; el proceso lo maneja el programa que está en el centro (Ladder o Bloques).
+- [x] Test (`fup.test.ts`): el FUP da las mismas salidas que el ladder durante un día simulado y en casos de lluvia, emergencia, riego manual, falla de riego y alarma.
+- [x] Sin edición; zoom y desplazamiento.
 
 ## 6. Sim. en vivo (abajo a la derecha)
-- [ ] Ventana flotante del tamaño de la animación; se redimensiona desde la esquina superior izquierda manteniendo la proporción y puede superponerse.
-- [ ] Se quita el texto de resumen ("Riego por horario y por humedad…"); el tiempo simulado queda como un reloj sobre la animación.
-- [ ] Solo al expandirla aparece a la izquierda un **mini menú** plegable: interruptores de entradas (I1–I5), controles de sensores (AI1–AI4) y luces de las salidas Q1–Q8.
+- [x] Ventana flotante del tamaño de la animación; se redimensiona desde la esquina superior izquierda manteniendo la proporción y puede superponerse. Se recuerda el tamaño.
+- [x] Se quita el texto de resumen ("Riego por horario y por humedad…"); el tiempo simulado queda como un reloj sobre la animación.
+- [x] Solo al expandirla aparece a la izquierda un **mini menú** plegable: entradas I1–I5, sliders del entorno (de ellos salen los sensores), valores de AI1–AI4 y luces de las salidas Q1–Q8.
 
 ## 7. Skin de LOGO!Soft Comfort
 - [ ] Ventana gris claro, barra de íconos, franja azul oscuro "Editor de diagramas", pestaña con el nombre del archivo y línea naranja.

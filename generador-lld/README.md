@@ -13,6 +13,7 @@ Los `.lld` de LOGO!Soft Comfort son objetos Java serializados. Estos scripts Bea
 cd generador-lld
 ./generar.sh invernadero.bsh        # regenera Ejercicios/Proyecto/Invernadero.lld
 ./generar.sh invernadero-fup.bsh    # pasa ese .lld a FUP: Ejercicios/Proyecto/Invernadero.lsc
+./generar.sh exportar-fup.bsh       # exporta ese .lsc a JSON para la vista "Bloques" del simulador web
 ./generar.sh guia-tp.bsh            # regenera Ejercicios/Guia TP/*.lld
 ./generar.sh ejercicios-nuevos.bsh  # regenera Ejercicios/Nuevos/*.lld
 ./generar.sh inspeccionar.bsh "../Ejercicios/EJ autoatizacion.lld"   # lista bloques y la lógica compilada
@@ -29,5 +30,6 @@ LOGO_DIR="D:/Siemens/LOGOComfort_V7" ./generar.sh guia-tp.bsh
 - `lib.bsh`: funciones base. `loadDrawing` y `saveDrawing` leen y escriben el formato (al guardar ajusta la cantidad de hojas para que LOGO!Soft muestre todo el programa); además `contact`, `coil`, `onDelay`, `timer` (temporizador en s, min u h), `weekly` (temporizador semanal), `sfb` (función especial), `wire`/`wireIn` (conexiones), `comment` y `dumpModel` (muestra la lógica que compila LOGO!Soft, útil para verificar).
 - `invernadero.bsh`: el programa del proyecto, igual al ejemplo del simulador web.
 - `invernadero-fup.bsh`: convierte `Invernadero.lld` a FUP (`.lsc`) con el conversor de LOGO!Soft (`CompilerKopToFup` + `LayoutProducer`, con más separación entre bloques), y agrega los nombres de entradas/salidas y las etiquetas de las funciones especiales. Crea una vista Swing (no se muestra), así que desactiva el modo headless.
+- `exportar-fup.bsh`: lee `Invernadero.lsc` y escribe `simulador-logo/src/scenarios/invernadero/fup.json` (bloques con posición, entradas negadas, parámetros, cables con sus quiebres, comentarios y nombres de E/S). Hay que correrlo de nuevo cada vez que cambia el `.lsc`; el test `fup.test.ts` del simulador comprueba que ese FUP da las mismas salidas que el KOP.
 - `guia-tp.bsh` y `ejercicios-nuevos.bsh`: un bloque de código por ejercicio.
 - Como plantilla se usa `Ejercicios/EJ autoatizacion.lld`; de ahí salen la configuración y el autor del programa.
