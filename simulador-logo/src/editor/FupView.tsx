@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react'
 import type { FupBlock, FupKind, FupProgram, FupResult } from '../plc/fup'
 import { getScenario } from '../scenarios'
 import { useStore } from '../store'
+import { DocTab } from '../ui/StatusBar'
 
 const LINE = 14 // alto de renglón del texto de parámetros en LOGO!Soft
 
@@ -204,10 +205,9 @@ export function FupView() {
           +
         </button>
         <span className="tb-sep" />
-        <span className="tb-hint">
-          <strong>{file}</strong> · solo lectura. Mientras esta vista está abierta, el proceso lo maneja este programa.
-        </span>
+        <span className="tb-hint">Solo lectura. Mientras esta vista está abierta, el proceso lo maneja este programa.</span>
       </div>
+      <DocTab file={file ?? prog.source} note="solo lectura" />
       <div className="fup-scroll" tabIndex={0} aria-label="Diagrama de bloques">
         <FupDrawing prog={prog} res={res} zoom={zoom} />
       </div>

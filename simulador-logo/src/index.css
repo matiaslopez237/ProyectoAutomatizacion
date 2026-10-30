@@ -1,86 +1,44 @@
 /* Tablero de paneles (sliders · ladder/bloques · simulación) que se abren y cierran desde la barra, con el lienzo gris y los bloques amarillos de LOGO!Soft. */
 :root {
-  --bg: #e6eaed;
-  --surface: #f6f8f9;
-  --surface-2: #dfe5e9;
-  --line: #c2ccd3;
-  --fg: #1b252c;
-  --muted: #5a6872;
-  --accent: #007f86;
+  /* cromo de ventana tipo LOGO!Soft Comfort 8 (Windows clásico) */
+  --bg: #c9ced4;
+  --surface: #f0f0f0;
+  --surface-2: #e1e1e1;
+  --line: #a7adb4;
+  --fg: #111111;
+  --muted: #555d66;
+  --accent: #1a5fb4;
   --accent-fg: #ffffff;
+  --hover: #e5f1fb;
+  --hover-line: #0078d7;
   --on: #1e9e52;
   --warn: #b26a00;
   --bad: #c62828;
   --led-off: #9aa6ae;
-  /* lienzo KOP */
-  --canvas: #cfd3d7;
-  --canvas-dot: #9aa1a8;
-  --rail: #111417;
-  --wire: #15191c;
-  --live: #d6281f;
-  --block: #f7d95a;
-  --block-line: #a3861b;
-  --block-ink: #1a1a1a;
-  --param: #2e7d32;
-  --comment: #2b3238;
-  --select: #1565c0;
+  /* barras de título: "Editor de diagramas" (azul) y "Herramientas" (pizarra) */
+  --title-navy: #283b5b;
+  --title-slate: #5d6670;
+  --title-fg: #ffffff;
+  /* pestaña del archivo abierto */
+  --tab-strip: #c3c7cc;
+  --tab-mark: #f08c00;
+  /* lienzo: blanco como en LOGO!Soft */
+  --canvas: #ffffff;
+  --canvas-dot: #a9a9a9;
+  --rung: #c4c4c4;
+  --rail: #000000;
+  --wire: #000000;
+  --live: #e00000;
+  --block: #fdd47e;
+  --block-line: #d6a443;
+  --block-ink: #000000;
+  --param: #1f8a2c;
+  --comment: #000000;
+  --select: #e00000;
 
-  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-ui: 'Segoe UI', Tahoma, 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #11171b;
-    --surface: #182026;
-    --surface-2: #212b32;
-    --line: #34424b;
-    --fg: #e1e8ec;
-    --muted: #93a3ad;
-    --accent: #36b9b6;
-    --accent-fg: #06201f;
-    --on: #45d47e;
-    --warn: #f0a63a;
-    --bad: #ff6b5e;
-    --led-off: #4a5760;
-    --canvas: #2a3137;
-    --canvas-dot: #43505a;
-    --rail: #e8ecef;
-    --wire: #d9dee2;
-    --live: #ff5a4f;
-    --block: #e0c247;
-    --block-line: #8c7316;
-    --block-ink: #17150c;
-    --param: #7fd18a;
-    --comment: #c5cfd6;
-    --select: #6aa9ff;
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #11171b;
-  --surface: #182026;
-  --surface-2: #212b32;
-  --line: #34424b;
-  --fg: #e1e8ec;
-  --muted: #93a3ad;
-  --accent: #36b9b6;
-  --accent-fg: #06201f;
-  --on: #45d47e;
-  --warn: #f0a63a;
-  --bad: #ff6b5e;
-  --led-off: #4a5760;
-  --canvas: #2a3137;
-  --canvas-dot: #43505a;
-  --rail: #e8ecef;
-  --wire: #d9dee2;
-  --live: #ff5a4f;
-  --block: #e0c247;
-  --block-line: #8c7316;
-  --block-ink: #17150c;
-  --param: #7fd18a;
-  --comment: #c5cfd6;
-  --select: #6aa9ff;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -89,7 +47,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font: 14px/1.45 var(--font-ui);
+  font: 13px/1.45 var(--font-ui);
   -webkit-tap-highlight-color: transparent;
 }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -135,7 +93,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   padding: 5px 8px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: var(--bg);
+  background: #ffffff;
   color: var(--fg);
 }
 .appbar-run { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; }
@@ -168,7 +126,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--surface);
   cursor: pointer;
 }
-.btn:hover { background: var(--surface-2); }
+.btn:hover { background: var(--hover); border-color: var(--hover-line); }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 .btn-primary:hover { background: var(--accent); filter: brightness(1.08); }
@@ -195,19 +153,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .panel-empty p, .all-closed p { margin: 0; max-width: 46ch; }
 
 /* botones de la barra que abren y cierran cada panel */
-.panel-toggles { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.panel-toggles { display: flex; gap: 2px; align-self: flex-end; margin-bottom: -9px; }
 .panel-toggle {
-  padding: 5px 12px;
-  border: 0;
-  border-left: 1px solid var(--line);
-  background: var(--surface);
+  padding: 5px 12px 6px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: var(--surface-2);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
 }
-.panel-toggle:first-child { border-left: 0; }
-.panel-toggle:hover { background: var(--surface-2); }
-.panel-toggle[aria-pressed='true'] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.panel-toggle:hover { background: var(--hover); }
+.panel-toggle[aria-pressed='true'] { background: #ffffff; color: #0018c8; font-weight: 600; box-shadow: inset 0 2px 0 var(--tab-mark); }
 
 /* barra de título de cada panel */
 .panel-head {
@@ -215,11 +173,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 3px 4px 3px 10px;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--line);
+  padding: 3px 4px 3px 8px;
+  background: var(--title-navy);
+  color: var(--title-fg);
 }
-.panel-head h2 { margin: 0 auto 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; }
+.panel-env > .panel-head { background: var(--title-slate); }
+.panel-head h2 { margin: 0 auto 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.01em; }
 .panel-btn {
   width: 26px;
   height: 24px;
@@ -233,8 +192,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   line-height: 1;
   cursor: pointer;
 }
-.panel-btn:hover { border-color: var(--line); background: var(--surface); }
-.panel-btn[aria-pressed='true'] { color: var(--accent); }
+.panel-btn:hover { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.14); }
+.panel-btn[aria-pressed='true'] { color: var(--tab-mark); }
 
 /* ---------- panel sliders ---------- */
 .panel-env .env { flex: 1; min-height: 0; overflow-y: auto; }
@@ -327,7 +286,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   cursor: pointer;
   font-size: 13px;
 }
-.tb:hover:not(:disabled) { border-color: var(--line); background: var(--surface-2); }
+.tb:hover:not(:disabled) { border-color: var(--hover-line); background: var(--hover); }
 .tb:disabled { opacity: 0.4; cursor: default; }
 .tb-sep { width: 1px; height: 20px; background: var(--line); margin-inline: 4px; }
 .tb-zoom { font: 12px var(--font-mono); min-width: 42px; text-align: center; }
@@ -341,7 +300,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ladder-menu .info { max-height: 45%; }
 .tb.is-on { border-color: var(--accent); color: var(--accent); }
 .tb-menu .chip { margin-left: 2px; padding-inline: 6px; }
-.palette { overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface); padding: 6px 0; font-size: 12.5px; }
+.palette { overflow-y: auto; border-right: 1px solid var(--line); background: #ffffff; padding: 6px 0; font-size: 12.5px; }
 .palette details { padding-inline: 6px; }
 .palette summary { font-weight: 600; padding: 4px 4px; cursor: pointer; }
 .palette ul { list-style: none; margin: 0; padding: 0 0 4px 10px; }
@@ -369,6 +328,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .kop-svg { display: block; touch-action: none; user-select: none; }
 .kop-bg { fill: var(--canvas); }
 .kop-griddot { fill: var(--canvas-dot); }
+.kop-rung { stroke: var(--rung); stroke-width: 1; pointer-events: none; }
+.kop-handle { fill: var(--select); pointer-events: none; }
 .kop-rail { fill: var(--rail); }
 .kop-rail.is-live { fill: var(--live); }
 .kop-wire { fill: none; stroke: var(--wire); stroke-width: 1.4; }
@@ -397,6 +358,36 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .kop-pinlabel { font: 7.5px var(--font-mono); fill: var(--block-ink); pointer-events: none; }
 .kop-anatext { font: 700 8px var(--font-mono); fill: var(--block-ink); pointer-events: none; }
 .kop-selbox { fill: none; stroke: var(--select); stroke-width: 1.2; stroke-dasharray: 3 2; pointer-events: none; }
+
+/* ---------- pestaña del archivo abierto (como "4.lld" en LOGO!Soft) ---------- */
+.doc-tabs { flex-shrink: 0; display: flex; padding: 4px 6px 0; background: var(--tab-strip); border-bottom: 1px solid var(--line); }
+.doc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 4px;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  background: #ffffff;
+  box-shadow: inset 0 3px 0 var(--tab-mark);
+  font-size: 12px;
+}
+.doc-tab small { color: var(--muted); }
+
+/* ---------- barra de estado ---------- */
+.statusbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 24px;
+  padding-inline: 8px 0;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.statusbar > :first-child { margin-right: auto; }
+.status-cell { padding: 3px 10px; border-left: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- vista de bloques (FUP del .lsc, solo lectura) ---------- */
 .fup-scroll { flex: 1; min-height: 0; overflow: auto; background: var(--canvas); outline: none; }
@@ -520,7 +511,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   padding: 7px 9px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: var(--bg);
+  background: #ffffff;
   font-size: 16px;
 }
 .field textarea { font: 12px var(--font-mono); resize: vertical; }

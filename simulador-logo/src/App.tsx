@@ -12,6 +12,8 @@ import { DocsDialog } from './ui/DocsDialog'
 import { EnvPanel } from './ui/EnvPanel'
 import { FileDialog } from './ui/FileDialog'
 import { SketchPanel } from './ui/SketchPanel'
+import { programFile } from './ui/programFile'
+import { DocTab, StatusBar } from './ui/StatusBar'
 
 /** Paneles que se abren y cierran desde la barra. Ladder y Bloques comparten el centro: se ve uno a la vez. */
 type PanelId = 'sliders' | 'ladder' | 'bloques' | 'sim'
@@ -236,6 +238,7 @@ export default function App() {
     'panel-editor',
     <>
       <Toolbar onFile={() => setFileOpen(true)} menuOpen={ladderMenu} onMenu={() => setLadderMenu(!ladderMenu)} />
+      <DocTab file={programFile(scenarioId, 'ladder')} />
       <div className={`editor-body${ladderMenu ? '' : ' no-menu'}`}>
         {ladderMenu && (
           <div className="ladder-menu" id="ladder-menu">
@@ -369,6 +372,8 @@ export default function App() {
       </header>
 
       {content}
+
+      <StatusBar />
 
       <PropertiesDialog />
       <FileDialog open={fileOpen} onClose={() => setFileOpen(false)} />

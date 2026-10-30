@@ -37,10 +37,11 @@ Rama: `rediseno-paneles`. Solo escritorio (no se adapta a celulares). GitHub Pag
 - [x] Solo al expandirla aparece a la izquierda un **mini menú** plegable: entradas I1–I5, sliders del entorno (de ellos salen los sensores), valores de AI1–AI4 y luces de las salidas Q1–Q8.
 
 ## 7. Skin de LOGO!Soft Comfort
-- [ ] Ventana gris claro, barra de íconos, franja azul oscuro "Editor de diagramas", pestaña con el nombre del archivo y línea naranja.
-- [ ] Ladder: lienzo blanco con líneas por escalón y riel izquierdo negro grueso. FUP: grilla de puntos.
-- [ ] Bloques amarillos, selección con cuadraditos rojos, barra de estado abajo ("LOGO! 8.4 · 100 %").
+- [x] Ventana gris claro, botones de paneles como las pestañas "Modo de diagrama / Proyecto de red", barras de título azul oscuro (Sliders en gris pizarra, como "Herramientas"), pestaña con el nombre del archivo y línea naranja.
+- [x] Ladder: lienzo blanco con una línea entre escalones (calculada a partir de los bloques conectados) y riel izquierdo negro grueso. FUP: lienzo blanco con grilla de puntos.
+- [x] Bloques amarillos, selección con cuadraditos rojos, barra de estado abajo (programa que maneja el proceso, archivo, "LOGO! 8.4", zoom y velocidad).
+- Decisión: se quita el modo oscuro, porque LOGO!Soft es solo claro.
 
 ## 8. Verificación
-- [ ] `npm test` (incluido FUP vs. ladder) y `npm run build`.
-- [ ] Prueba en el navegador: abrir/cerrar, expandir, redimensionar la simulación, mini menú, menú plegable del ladder y vista Bloques corriendo.
+- [x] `npm test` (24 tests, incluido FUP vs. ladder), `npm run build` y `npm run lint`.
+- [x] Prueba en el navegador: abrir/cerrar, expandir, redimensionar la simulación, mini menú, menú plegable del ladder, vista Bloques corriendo y selección en el ladder.
