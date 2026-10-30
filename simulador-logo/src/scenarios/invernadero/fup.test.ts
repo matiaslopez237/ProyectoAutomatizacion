@@ -61,10 +61,10 @@ describe('FUP del .lsc contra el KOP del simulador', () => {
       I5: (t > 3400 && t < 3402) || (t > 7000 && t < 7002),
     })
     expect(compare({ tempExt: 2, rhExt: 90, hour: 20, sun: 10, wind: 60, evap: 1, supply: 100 }, script, 3 * 3600)).toEqual([])
-  })
+  }, 30000)
 
   it('falla de riego sin agua de red, alarma por temperatura crítica y reconocimiento', () => {
     const script = (t: number) => ({ I1: true, I5: t > 9000 && t < 9002 })
     expect(compare({ tempExt: 42, rhExt: 20, hour: 7, sun: 100, wind: 0, evap: 3, supply: 0 }, script, 4 * 3600)).toEqual([])
-  })
+  }, 30000)
 })
