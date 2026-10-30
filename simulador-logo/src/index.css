@@ -1,4 +1,4 @@
-/* Tablero de tres paneles (entorno · programa KOP · proceso) con el lienzo gris y los bloques amarillos de LOGO!Soft. */
+/* Tablero de paneles (sliders · ladder/bloques · simulación) que se abren y cierran desde la barra, con el lienzo gris y los bloques amarillos de LOGO!Soft. */
 :root {
   --bg: #e6eaed;
   --surface: #f6f8f9;
@@ -184,22 +184,58 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .panel { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--surface); }
 .resizer { background: var(--bg); cursor: col-resize; border-inline: 1px solid var(--line); }
 .resizer:hover, .resizer:focus-visible { background: var(--accent); }
-.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--line); padding-inline: max(8px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-right, 0px)); }
-.tab {
-  flex: 1;
-  padding: 10px 6px;
+/* panel maximizado: ocupa todo el lugar debajo de la barra */
+.expanded { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.expanded > .panel { flex: 1; }
+.all-closed, .panel-empty { display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--muted); }
+.all-closed { flex: 1; }
+.panel-empty { flex: 1; min-width: 0; min-height: 0; background: var(--bg); }
+.panel-empty p, .all-closed p { margin: 0; max-width: 46ch; }
+
+/* botones de la barra que abren y cierran cada panel */
+.panel-toggles { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.panel-toggle {
+  padding: 5px 12px;
   border: 0;
-  border-bottom: 3px solid transparent;
-  background: none;
-  font-weight: 600;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
   color: var(--muted);
+  font-size: 13px;
   cursor: pointer;
 }
-.tab[aria-selected='true'] { color: var(--fg); border-bottom-color: var(--accent); }
-.stack .panel { flex: 1; }
+.panel-toggle:first-child { border-left: 0; }
+.panel-toggle:hover { background: var(--surface-2); }
+.panel-toggle[aria-pressed='true'] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
 
-/* ---------- panel entorno ---------- */
-.panel-env { overflow-y: auto; }
+/* barra de título de cada panel */
+.panel-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px 3px 10px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.panel-head h2 { margin: 0 auto 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; }
+.panel-btn {
+  width: 26px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.panel-btn:hover { border-color: var(--line); background: var(--surface); }
+.panel-btn[aria-pressed='true'] { color: var(--accent); }
+
+/* ---------- panel sliders ---------- */
+.panel-env .env { flex: 1; min-height: 0; overflow-y: auto; }
 .env { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 22px; }
 .env-sec h3 {
   margin: 0 0 10px;
@@ -376,19 +412,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .info-warning { color: var(--warn); }
 .info-ok { color: var(--muted); }
 
-/* ---------- proceso ---------- */
-.panel-sketch { overflow-y: auto; }
-.sketch { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.sketch-note { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
-
-/* escritorio: el proceso va abajo a todo el ancho; el dibujo toma toda la altura y el texto queda al costado */
-@media (min-width: 981px) {
-  .rows > .panel-sketch { overflow: hidden; }
-  .rows > .panel-sketch .sketch { height: 100%; flex-direction: row; align-items: center; justify-content: center; gap: 20px; padding-block: 8px; }
-  .rows > .panel-sketch .gh { height: 100%; width: auto; max-width: calc(100% - 240px); max-height: none; }
-  .rows > .panel-sketch .sketch-note { flex: 0 1 210px; }
-  .sketch-size { position: absolute; top: 10px; right: 16px; z-index: 1; }
-}
+/* ---------- simulación ---------- */
+/* el dibujo toma toda la altura del panel y el texto queda al costado */
+.panel-sketch { overflow: hidden; }
+.sketch { flex: 1; min-height: 0; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 20px; }
+.sketch .gh { height: 100%; width: auto; max-width: calc(100% - 240px); max-height: none; }
+.sketch-note { flex: 0 1 210px; margin: 0; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
 
 /* ---------- diálogos ---------- */
 .props {
