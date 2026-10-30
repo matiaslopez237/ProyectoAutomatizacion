@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import type { FupProgram } from '../plc/fup'
 import type { Circuit } from '../plc/types'
 
 /** Slider del entorno (clima, condiciones del proceso…) */
@@ -82,5 +83,7 @@ export interface Scenario<S = any> {
   step: (state: S, outputs: Record<string, boolean>, params: Record<string, number>, digital: Record<string, boolean>, dt: number) => S
   Sketch: ComponentType<SketchProps<S>>
   example: () => Circuit
+  /** el mismo programa en FUP, exportado de un .lsc de LOGO!Soft (vista "Bloques", solo simulación) */
+  fup?: FupProgram
   docs?: ScenarioDocs
 }

@@ -2,7 +2,7 @@
 
 Proyecto de Tecnología de la Automatización (UTN FRSR). Un PLC Siemens LOGO! controla el clima y el riego de un invernadero a partir de cuatro sensores analógicos y cinco entradas digitales.
 
-- **Programa para LOGO!Soft Comfort:** [`Ejercicios/Proyecto/Invernadero.lld`](../Ejercicios/Proyecto/Invernadero.lld)
+- **Programa para LOGO!Soft Comfort:** [`Ejercicios/Proyecto/Invernadero.lld`](../Ejercicios/Proyecto/Invernadero.lld) (KOP) y [`Ejercicios/Proyecto/Invernadero.lsc`](../Ejercicios/Proyecto/Invernadero.lsc) (FUP)
 - **Simulador web (mismo programa, con el proceso animado):** https://matiaslopez237.github.io/ProyectoAutomatizacion/ (botón **Conexiones y E/S** para ver esta tabla y el diagrama)
 
 ## Qué hace
@@ -97,4 +97,4 @@ El diagrama se genera con `node simulador-logo/scripts/conexiones-invernadero.mj
 
 El repositorio incluye tests automáticos que corren el programa junto con el modelo del invernadero (`simulador-logo/src/scenarios/invernadero/invernadero.test.ts`). Prueban cada una de las funciones de la primera tabla: etapas de ventilación, lluvia, enclavamientos, riego por horario y por suelo muy seco, falla de riego y reconocimiento, contador de ciclos, y alarma con memoria (incluido que no se pueda reconocer mientras la causa sigue). Se corren con `npm test` dentro de `simulador-logo/` y también en cada publicación.
 
-El `.lld` lo arma el script `generador-lld/invernadero.bsh` con las clases de LOGO!Soft Comfort V7. Se verificó que abre en LOGO!Soft y que la lógica que compila coincide con la del simulador.
+El `.lld` lo arma el script `generador-lld/invernadero.bsh` con las clases de LOGO!Soft Comfort V7. Se verificó que abre en LOGO!Soft y que la lógica que compila coincide con la del simulador. El `.lsc` (FUP) sale de ese `.lld` con `generador-lld/invernadero-fup.bsh`, que usa el mismo conversor KOP → FUP de LOGO!Soft.

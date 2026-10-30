@@ -3,6 +3,7 @@ import type { KeyboardEvent, PointerEvent as RPointerEvent } from 'react'
 import { BLOCK_DEFS, isFb } from '../plc/blockDefs'
 import type { Block, BlockEval, BlockType, FbState } from '../plc/types'
 import { RAIL } from '../plc/types'
+import { actuateInput, isDigitalInput } from '../sim/inputs'
 import { useStore } from '../store'
 import { blockSize, inPin, outPin, RAIL_X, snap, wirePath } from './geometry'
 import { Glyph } from './Glyph'
@@ -52,6 +53,7 @@ const BlockView = memo(function BlockView({
   fb,
   running,
   inputOn,
+  actuator,
 }: {
   b: Block
   selected: boolean
@@ -59,6 +61,8 @@ const BlockView = memo(function BlockView({
   fb?: FbState
   running: boolean
   inputOn: boolean
+  /** en RUN, un clic en el contacto acciona su entrada I */
+  actuator: boolean
 }) {
   const { w, h } = blockSize(b)
   const def = BLOCK_DEFS[b.type]
@@ -68,7 +72,13 @@ const BlockView = memo(function BlockView({
   const active = running && !!ev?.out && (b.type !== 'ANA' || inputOn)
 
   return (
-    <g transform={`translate(${b.x} ${b.y})`} className={`kop-block${selected ? ' is-selected' : ''}${active ? ' is-active' : ''}`} data-kind="block" data-id={b.id}>
+    <g
+      transform={`translate(${b.x} ${b.y})`}
+      className={`kop-block${selected ? ' is-selected' : ''}${active ? ' is-active' : ''}${actuator ? ' is-actuator' : ''}`}
+      data-kind="block"
+      data-id={b.id}
+    >
+      {actuator && <title>{`Clic: accionar ${b.op}`}</title>}
       <rect className="kop-hit" x={-2} y={-2} width={w + 4} height={h + 4} data-kind="block" data-id={b.id} />
       {b.comment && (
         <text className="kop-comment" x={fbBlock ? 6 : -4} y={-6}>
@@ -104,7 +114,14 @@ const BlockView = memo(function BlockView({
           ))}
         </text>
       )}
-      {selected && <rect className="kop-selbox" x={-4} y={-4} width={w + 8} height={h + 8} />}
+      {/* selección como en LOGO!Soft: cuadraditos rojos en las esquinas */}
+      {selected &&
+        [
+          [3, 14],
+          [w - 9, 14],
+          [3, h - 10],
+          [w - 9, h - 10],
+        ].map(([x, y], i) => <rect key={i} className="kop-handle" x={x} y={y} width={6} height={6} />)}
     </g>
   )
 })
@@ -173,6 +190,14 @@ export function Canvas() {
     if (kind === 'wire' && id) {
       st.select({ kind: 'wire', id })
       return
+    }
+    // en RUN los contactos de entradas (I1, I2…) funcionan como el selector o pulsador real
+    if (running && kind === 'block' && id) {
+      const b = byId.get(id)
+      if (b && (b.type === 'NO' || b.type === 'NC') && isDigitalInput(b.op)) {
+        actuateInput(b.op)
+        return
+      }
     }
     if ((kind === 'block' || kind === 'pin-in') && id) {
       // doble clic detectado a mano: con pointer capture el dblclick nativo pierde el bloque
@@ -295,6 +320,36 @@ export function Canvas() {
     return { count, out }
   }, [circuit.wires])
 
+  // líneas entre escalones, como las de LOGO!Soft: cada escalón es un grupo de bloques unidos por cables
+  // (sin contar la barra); la línea va en el medio del hueco entre un escalón y el siguiente
+  const rungLines = useMemo(() => {
+    const parent = new Map<string, string>()
+    const find = (id: string): string => {
+      const p = parent.get(id) ?? id
+      if (p === id) return id
+      const r = find(p)
+      parent.set(id, r)
+      return r
+    }
+    for (const w of circuit.wires) if (w.from !== RAIL && byId.has(w.from) && byId.has(w.to)) parent.set(find(w.from), find(w.to))
+    const spans = new Map<string, { top: number; bottom: number }>()
+    for (const b of circuit.blocks) {
+      const r = find(b.id)
+      const { h } = blockSize(b)
+      const s = spans.get(r)
+      spans.set(r, s ? { top: Math.min(s.top, b.y), bottom: Math.max(s.bottom, b.y + h) } : { top: b.y, bottom: b.y + h })
+    }
+    const sorted = [...spans.values()].sort((a, b) => a.top - b.top)
+    // une escalones que se superponen en altura
+    const merged: { top: number; bottom: number }[] = []
+    for (const s of sorted) {
+      const last = merged[merged.length - 1]
+      if (last && s.top < last.bottom) last.bottom = Math.max(last.bottom, s.bottom)
+      else merged.push({ ...s })
+    }
+    return merged.slice(1).map((s, i) => Math.round((merged[i].bottom + s.top) / 2))
+  }, [circuit, byId])
+
   const selectedIds = selection?.kind === 'block' ? new Set(selection.ids) : null
 
   return (
@@ -316,13 +371,10 @@ export function Canvas() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <defs>
-          <pattern id="kop-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-            <circle cx="0.5" cy="0.5" r="0.7" className="kop-griddot" />
-          </pattern>
-        </defs>
         <rect width={W} height={H} className="kop-bg" data-kind="bg" />
-        <rect width={W} height={H} fill="url(#kop-grid)" pointerEvents="none" />
+        {rungLines.map((y) => (
+          <line key={y} className="kop-rung" x1={0} y1={y} x2={W} y2={y} />
+        ))}
 
         {/* barra de alimentación izquierda */}
         <rect x={RAIL_X - 1} y={10} width={5} height={H - 20} className={`kop-rail${running ? ' is-live' : ''}`} />
@@ -354,6 +406,7 @@ export function Canvas() {
               fb={result?.state.fb[b.op]}
               running={running && !!result}
               inputOn={!!ev?.inputs[0]}
+              actuator={running && (b.type === 'NO' || b.type === 'NC') && isDigitalInput(b.op)}
             />
           )
         })}

@@ -1,6 +1,8 @@
+import type { FupProgram } from '../../plc/fup'
 import type { Scenario } from '../types'
 import wiringSvg from './conexiones.svg?url'
 import { greenhouseExample } from './example'
+import fupJson from './fup.json'
 import { initGreenhouse, stepGreenhouse, sunNow, type GreenhouseState } from './physics'
 import { GreenhouseSketch } from './Sketch'
 
@@ -45,6 +47,7 @@ export const invernadero: Scenario<GreenhouseState> = {
   step: stepGreenhouse,
   Sketch: GreenhouseSketch,
   example: greenhouseExample,
+  fup: fupJson as FupProgram,
   docs: {
     hardware: [
       { module: 'LOGO! 12/24 RCE (6ED1052-1MD08-0BA1)', role: 'CPU: 8 entradas (I7 e I8 como AI1 y AI2 de 0-10 V) y 4 salidas a relé de 10 A' },

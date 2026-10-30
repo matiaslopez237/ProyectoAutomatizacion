@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { BLOCK_DEFS } from './plc/blockDefs'
 import { createBlock, newId } from './plc/build'
+import { emptyFupState, type FupResult, type FupState } from './plc/fup'
 import type { Block, BlockType, Circuit, PlcState, ScanResult } from './plc/types'
 import { RAIL } from './plc/types'
 import { emptyPlcState } from './plc/scan'
@@ -8,9 +9,15 @@ import { getScenario, SCENARIOS } from './scenarios'
 
 export type Selection = { kind: 'block'; ids: string[] } | { kind: 'wire'; id: string } | null
 
+/** programa que maneja el proceso: el KOP editable o el FUP del .lsc */
+export type Program = 'ladder' | 'fup'
+
 export interface SimSnapshot {
   result: ScanResult | null
   plc: PlcState
+  /** el FUP corre siempre a la par del KOP (si el escenario lo tiene), con las mismas entradas */
+  fup: FupResult | null
+  fupState: FupState
   phys: unknown
   /** segundos simulados desde el último reinicio */
   t: number
@@ -29,6 +36,7 @@ interface AppState {
   running: boolean
   speed: number
   zoom: number
+  program: Program
   scenarioId: string
   params: Record<string, number>
   digital: Record<string, boolean>
@@ -53,6 +61,7 @@ interface AppState {
   setRunning: (r: boolean) => void
   setSpeed: (s: number) => void
   setZoom: (z: number) => void
+  setProgram: (p: Program) => void
   setParam: (k: string, v: number) => void
   setDigital: (op: string, v: boolean) => void
   setClockOn: (on: boolean) => void
@@ -77,7 +86,7 @@ function scenarioDefaults(id: string) {
 }
 
 function freshSim(phys: unknown): SimSnapshot {
-  return { result: null, plc: emptyPlcState(), phys, t: 0, history: {} }
+  return { result: null, plc: emptyPlcState(), fup: null, fupState: emptyFupState(), phys, t: 0, history: {} }
 }
 
 function loadSaved(): { circuit: Circuit; scenarioId: string } | null {
@@ -106,6 +115,7 @@ export const useStore = create<AppState>((set, get) => ({
   running: true,
   speed: 20,
   zoom: 1,
+  program: 'ladder',
   scenarioId: initialScenario,
   params: initDefaults.params,
   digital: initDefaults.digital,
@@ -170,9 +180,14 @@ export const useStore = create<AppState>((set, get) => ({
   select: (selection) => set({ selection }),
   arm: (armed) => set({ armed }),
   edit: (editing) => set({ editing }),
-  setRunning: (running) => set((s) => ({ running, sim: { ...s.sim, plc: running ? s.sim.plc : emptyPlcState(), result: running ? s.sim.result : null } })),
+  setRunning: (running) =>
+    set((s) => ({
+      running,
+      sim: running ? s.sim : { ...s.sim, plc: emptyPlcState(), result: null, fupState: emptyFupState(), fup: null },
+    })),
   setSpeed: (speed) => set({ speed }),
   setZoom: (zoom) => set({ zoom: Math.min(2, Math.max(0.5, zoom)) }),
+  setProgram: (program) => set({ program }),
   setParam: (k, v) => set((s) => ({ params: { ...s.params, [k]: v } })),
   setDigital: (op, v) => set((s) => ({ digital: { ...s.digital, [op]: v } })),
   setClockOn: (clockOn) => set({ clockOn }),
@@ -186,6 +201,10 @@ export const useStore = create<AppState>((set, get) => ({
   },
   resetProcess: () => set((s) => ({ sim: freshSim(getScenario(s.scenarioId).init(s.params)) })),
 }))
+
+/** Salidas Q del programa que mueve el proceso (KOP o FUP). */
+export const selectOutputs = (s: AppState): Record<string, boolean> | undefined =>
+  s.program === 'fup' && getScenario(s.scenarioId).fup ? s.sim.fup?.outputs : s.sim.result?.outputs
 
 // Guarda el circuito en este navegador (solo comodidad: si falla, la app sigue igual).
 let saveTimer: ReturnType<typeof setTimeout> | undefined
