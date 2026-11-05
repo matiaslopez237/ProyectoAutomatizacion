@@ -4,6 +4,9 @@ import type { PlcState } from '../../plc/types'
 import { greenhouseExample } from './example'
 import { initGreenhouse, stepGreenhouse, sunNow, type GreenhouseState } from './physics'
 
+/** valor que lee LOGO! (0…1000) para una señal de 0-10 V */
+const raw = (v: number) => Math.min(1000, Math.max(0, Math.round(v)))
+
 const DEFAULTS = { tempExt: 24, rhExt: 45, hour: 13, sun: 75, wind: 20, evap: 1, supply: 100 }
 const circuit = greenhouseExample()
 
@@ -25,10 +28,10 @@ class Sim {
     for (let k = 0; k < seconds / dt; k++) {
       const p = this.params
       const ana = {
-        AI1: Math.round(this.phys.temp * 10),
-        AI2: Math.round(this.phys.rh * 10),
-        AI3: Math.round(this.phys.soil * 10),
-        AI4: Math.round(sunNow(p) * 10),
+        AI1: raw(this.phys.temp * 20), // EE210: 0-10 V = 0…50 °C
+        AI2: raw(this.phys.rh * 10),
+        AI3: raw(this.phys.soil * 10),
+        AI4: raw(sunNow(p) * 10 * 0.5), // LPPYRA03AV: 0-10 V = 0…2000 W/m² (100 % de sol = 1000 W/m²)
       }
       const r = scan(circuit, this.plc, { bin: this.digital, ana, hour: p.hour }, dt)
       this.plc = r.state

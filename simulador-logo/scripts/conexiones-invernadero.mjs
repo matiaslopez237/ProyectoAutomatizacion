@@ -122,10 +122,24 @@ const transmitter = (x, tag, label, sx, sLabel) => {
   line(sx, 290, sx, YT - 5)
   terminal(sx, YT, sLabel)
 }
-transmitter(612, 'B2', 'T 0-100 °C', 615, 'I7')
-transmitter(670, 'B3', 'HR 0-100 %', 660, 'I8')
-transmitter(1150, 'B4', 'suelo', 1145, 'U1')
-transmitter(1215, 'B5', 'radiación', 1215, 'U2')
+// B2: un solo transmisor E+E EE210 con dos salidas 0-10 V (salida 2 = temperatura, salida 1 = humedad)
+add(`<rect x="586" y="200" width="110" height="40" rx="3" fill="#fff" stroke="${C.line}" stroke-width="1.4"/>`)
+text(641, 216, 'B2 EE210', { size: 11, weight: 'bold' })
+text(641, 232, 'T 0-50 °C · HR 0-100 %', { size: 9, color: C.muted })
+line(600, Y24, 600, 200, C.p24)
+dot(600, Y24, C.p24)
+line(627, YM, 627, 200, C.m)
+dot(627, YM, C.m)
+line(655, 240, 655, 290)
+line(655, 290, 615, 290)
+line(615, 290, 615, YT - 5)
+terminal(615, YT, 'I7')
+line(684, 240, 684, 300)
+line(684, 300, 660, 300)
+line(660, 300, 660, YT - 5)
+terminal(660, YT, 'I8')
+transmitter(1150, 'B4', 'SMT100', 1145, 'U1')
+transmitter(1215, 'B5', 'LPPYRA03', 1215, 'U2')
 // referencia M de los canales del AM2
 terminal(1145, YB, 'M1', true)
 terminal(1215, YB, 'M2', true)
@@ -188,12 +202,11 @@ const legend = [
   'S1  selector Manual / Automático',
   'S2  pulsador riego manual',
   'S0  hongo de emergencia (ver nota)',
-  'B1  sensor de lluvia, contacto de relé',
+  'B1  sensor de lluvia Hydreon RG-11 (relé NA)',
   'S3  pulsador reconocer alarmas',
-  'B2  transmisor de temperatura 0-10 V',
-  'B3  transmisor de humedad relativa 0-10 V',
-  'B4  sensor de humedad de suelo 0-10 V',
-  'B5  sensor de radiación solar 0-10 V',
+  'B2  E+E EE210: T 0-50 °C (I7) y HR 0-100 % (I8)',
+  'B4  humedad de suelo TRUEBNER SMT100 0-10 V',
+  'B5  piranómetro Delta OHM LPPYRA03AV 0-10 V',
   'K1 a K6  contactores 220 V CA (con guardamotor en motores)',
   'H1  baliza y sirena 24 V CC · H2  piloto ámbar 24 V CC',
 ]

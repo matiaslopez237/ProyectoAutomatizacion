@@ -5,6 +5,9 @@ import { greenhouseExample } from './example'
 import fupJson from './fup.json'
 import { initGreenhouse, stepGreenhouse, sunNow } from './physics'
 
+/** valor que lee LOGO! (0…1000) para una señal de 0-10 V */
+const raw = (v: number) => Math.min(1000, Math.max(0, Math.round(v)))
+
 const fup = fupJson as FupProgram
 const circuit = greenhouseExample()
 
@@ -22,10 +25,10 @@ function compare(params: Record<string, number>, script: (t: number) => Record<s
     p = { ...p, hour: (params.hour + t / 3600) % 24 }
     const digital = script(t)
     const ana = {
-      AI1: Math.round(phys.temp * 10),
-      AI2: Math.round(phys.rh * 10),
-      AI3: Math.round(phys.soil * 10),
-      AI4: Math.round(sunNow(p) * 10),
+      AI1: raw(phys.temp * 20), // EE210: 0-10 V = 0…50 °C
+      AI2: raw(phys.rh * 10),
+      AI3: raw(phys.soil * 10),
+      AI4: raw(sunNow(p) * 10 * 0.5), // LPPYRA03AV: 0-10 V = 0…2000 W/m² (100 % de sol = 1000 W/m²)
     }
     const inputs = { bin: digital, ana, hour: p.hour }
     const k = scan(circuit, plc, inputs, dt)

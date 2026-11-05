@@ -1,8 +1,10 @@
 import { CircuitBuilder } from '../../plc/build'
 import type { Block, Circuit } from '../../plc/types'
 
-// Programa del invernadero. Los sensores entran como AIx (0…1000) y cada conmutador de umbral
-// los pasa a unidades reales con ganancia 0,1 (°C o %).
+// Programa del invernadero. Los sensores entran como AIx (0…1000 para 0-10 V) y cada conmutador de umbral
+// los pasa a unidades reales con su ganancia:
+//   AI1 temperatura (EE210, 0…50 °C): 0,05 · AI2 humedad del aire (EE210, 0…100 %): 0,1
+//   AI3 humedad de suelo (SMT100, 0…100 %): 0,1 · AI4 radiación (LPPYRA03AV, 0…2000 W/m²): 2
 //
 // Entradas: I1 selector automático · I2 riego manual · I3 parada de emergencia · I4 lluvia · I5 reconocer alarmas
 // Salidas:  Q1 aspersor · Q2 ventilador · Q3 calefactor · Q4 ventana · Q5 nebulizador · Q6 luces · Q7 alarma · Q8 aviso de riego
@@ -15,8 +17,8 @@ export function greenhouseExample(): Circuit {
   const C4 = 460
   const FB = 580
   const QX = 760
-  const atrig = (op: string, y: number, label: string, comment: string, on: number, off: number) => {
-    const t = b.add('ATRIG', FB, y, undefined, comment, { On: on, Off: off, gain: 0.1, offset: 0 })
+  const atrig = (op: string, y: number, label: string, comment: string, on: number, off: number, gain = 0.1) => {
+    const t = b.add('ATRIG', FB, y, undefined, comment, { On: on, Off: off, gain, offset: 0 })
     b.series(t, b.add('ANA', C0, y, op, label))
     return t
   }
@@ -29,11 +31,11 @@ export function greenhouseExample(): Circuit {
   const soilOk = atrig('AI3', 40, 'humedad suelo', 'suelo húmedo (>45 %)', 45, 30)
   // ventana (On < Off): vale 1 con el suelo por debajo de 15 %
   const soilMin = atrig('AI3', 120, 'humedad suelo', 'suelo muy seco (<15 %)', 0, 15)
-  const mild = atrig('AI1', 200, 'temperatura', 'templado (>18 °C)', 18, 15)
-  const hot = atrig('AI1', 280, 'temperatura', 'calor (>28 °C)', 28, 25)
-  const crit = atrig('AI1', 360, 'temperatura', 'temp. crítica (>38 °C)', 38, 35)
+  const mild = atrig('AI1', 200, 'temperatura', 'templado (>18 °C)', 18, 15, 0.05)
+  const hot = atrig('AI1', 280, 'temperatura', 'calor (>28 °C)', 28, 25, 0.05)
+  const crit = atrig('AI1', 360, 'temperatura', 'temp. crítica (>38 °C)', 38, 35, 0.05)
   const humid = atrig('AI2', 440, 'humedad aire', 'aire húmedo (>65 %)', 65, 50)
-  const sunny = atrig('AI4', 520, 'luz solar', 'hay sol (>40 %)', 40, 25)
+  const sunny = atrig('AI4', 520, 'radiación solar', 'hay sol (>400 W/m²)', 400, 250, 2)
 
   // ===== 2. Temporizadores semanales (reloj del PLC)
   const wRiego = week(600, 'horario de riego 7-9 h y 18-20 h', 7, 9, 18, 20)
@@ -108,7 +110,7 @@ export function greenhouseExample(): Circuit {
   rung(b.coil('Q4', QX, 1870, 'ventana cenital'), b.c('I1', C0, 1870, 'automático'), b.c(hot.op, C1, 1870, 'calor'), b.c('I4', C2, 1870, 'lluvia', true), b.c('I3', C3, 1870, 'emergencia', true))
   const etapa2 = b.add('TON', FB, 1950, undefined, 'etapa 2: 3 min de calor', { T: 180 })
   rung(etapa2, b.c(hot.op, C0, 1950, 'calor'))
-  const veryHot = atrig('AI1', 2030, 'temperatura', 'mucho calor (>30 °C)', 30, 28)
+  const veryHot = atrig('AI1', 2030, 'temperatura', 'mucho calor (>30 °C)', 30, 28, 0.05)
   const yV = 2110
   const vAuto = b.c('I1', C0, yV, 'automático')
   const vCalor = b.c(hot.op, C1, yV, 'calor')
