@@ -5,6 +5,9 @@ import { greenhouseExample } from './example'
 import fupJson from './fup.json'
 import { initGreenhouse, stepGreenhouse, sunNow } from './physics'
 
+/** valor que lee LOGO! (0…1000) para una señal de 0-10 V */
+const raw = (v: number) => Math.min(1000, Math.max(0, Math.round(v)))
+
 const fup = fupJson as FupProgram
 const circuit = greenhouseExample()
 
@@ -22,10 +25,10 @@ function compare(params: Record<string, number>, script: (t: number) => Record<s
     p = { ...p, hour: (params.hour + t / 3600) % 24 }
     const digital = script(t)
     const ana = {
-      AI1: Math.round(phys.temp * 10),
-      AI2: Math.round(phys.rh * 10),
-      AI3: Math.round(phys.soil * 10),
-      AI4: Math.round(sunNow(p) * 10),
+      AI1: raw(phys.temp * 20), // EE210: 0-10 V = 0…50 °C
+      AI2: raw(phys.rh * 10),
+      AI3: raw(phys.soil * 10),
+      AI4: raw(sunNow(p) * 10 * 0.5), // LPPYRA03AV: 0-10 V = 0…2000 W/m² (100 % de sol = 1000 W/m²)
     }
     const inputs = { bin: digital, ana, hour: p.hour }
     const k = scan(circuit, plc, inputs, dt)
@@ -44,7 +47,7 @@ function compare(params: Record<string, number>, script: (t: number) => Record<s
 describe('FUP del .lsc contra el KOP del simulador', () => {
   it('tiene las 8 salidas y los mismos bloques de función que el ejemplo', () => {
     expect(fup.blocks.filter((b) => b.kind === 'Output').map((b) => b.id).sort()).toEqual(['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'])
-    expect(fup.blocks.filter((b) => b.kind === 'AnalogTrigger')).toHaveLength(7)
+    expect(fup.blocks.filter((b) => b.kind === 'AnalogTrigger')).toHaveLength(8)
   })
 
   it('un día entero en automático, con calor, riego por horario y el reloj avanzando', () => {
@@ -66,5 +69,9 @@ describe('FUP del .lsc contra el KOP del simulador', () => {
   it('falla de riego sin agua de red, alarma por temperatura crítica y reconocimiento', () => {
     const script = (t: number) => ({ I1: true, I5: t > 9000 && t < 9002 })
     expect(compare({ tempExt: 42, rhExt: 20, hour: 7, sun: 100, wind: 0, evap: 3, supply: 0 }, script, 4 * 3600)).toEqual([])
+  }, 30000)
+
+  it('suelo muy seco fuera de horario: riega desde menos de 15 % hasta pasar el 45 %', () => {
+    expect(compare({ tempExt: 30, rhExt: 30, hour: 12, sun: 90, wind: 10, evap: 3, supply: 100 }, () => ({ I1: true }), 3600)).toEqual([])
   }, 30000)
 })

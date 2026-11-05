@@ -10,8 +10,8 @@ export function hysteresis(value: number, on: number, off: number, prev: boolean
     if (value <= off) return false
     return prev
   }
-  // On < Off: ventana, la salida vale 1 entre On y Off
-  return value > on && value <= off
+  // On < Off: ventana, como en LOGO! la salida vale 1 con On ≤ valor < Off
+  return value >= on && value < off
 }
 
 /** Una leva del temporizador semanal: conexión ≤ hora < desconexión (puede cruzar la medianoche). Igual conexión y desconexión = leva sin usar. */

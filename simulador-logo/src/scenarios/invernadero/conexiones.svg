@@ -96,33 +96,26 @@
 <circle cx="570" cy="330" r="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
 <text x="570" y="320" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="#1a1a1a" text-anchor="middle">I6</text>
 <text x="570" y="352" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="normal" fill="#55616b" text-anchor="middle">libre</text>
-<rect x="586" y="200" width="52" height="40" rx="3" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
-<text x="612" y="216" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a" text-anchor="middle">B2</text>
-<text x="612" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">T 0-100 °C</text>
-<line x1="598" y1="150" x2="598" y2="200" stroke="#c62828" stroke-width="1.6"/>
-<circle cx="598" cy="150" r="3.2" fill="#c62828"/>
-<line x1="612" y1="172" x2="612" y2="200" stroke="#1565c0" stroke-width="1.6"/>
-<circle cx="612" cy="172" r="3.2" fill="#1565c0"/>
-<line x1="626" y1="240" x2="626" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
-<line x1="626" y1="290" x2="615" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
+<rect x="586" y="200" width="110" height="40" rx="3" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
+<text x="641" y="216" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a" text-anchor="middle">B2 EE210</text>
+<text x="641" y="232" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="normal" fill="#55616b" text-anchor="middle">T 0-50 °C · HR 0-100 %</text>
+<line x1="600" y1="150" x2="600" y2="200" stroke="#c62828" stroke-width="1.6"/>
+<circle cx="600" cy="150" r="3.2" fill="#c62828"/>
+<line x1="627" y1="172" x2="627" y2="200" stroke="#1565c0" stroke-width="1.6"/>
+<circle cx="627" cy="172" r="3.2" fill="#1565c0"/>
+<line x1="655" y1="240" x2="655" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
+<line x1="655" y1="290" x2="615" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
 <line x1="615" y1="290" x2="615" y2="325" stroke="#1a1a1a" stroke-width="1.6"/>
 <circle cx="615" cy="330" r="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
 <text x="615" y="320" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="#1a1a1a" text-anchor="middle">I7</text>
-<rect x="644" y="200" width="52" height="40" rx="3" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
-<text x="670" y="216" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a" text-anchor="middle">B3</text>
-<text x="670" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">HR 0-100 %</text>
-<line x1="656" y1="150" x2="656" y2="200" stroke="#c62828" stroke-width="1.6"/>
-<circle cx="656" cy="150" r="3.2" fill="#c62828"/>
-<line x1="670" y1="172" x2="670" y2="200" stroke="#1565c0" stroke-width="1.6"/>
-<circle cx="670" cy="172" r="3.2" fill="#1565c0"/>
-<line x1="684" y1="240" x2="684" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
-<line x1="684" y1="290" x2="660" y2="290" stroke="#1a1a1a" stroke-width="1.6"/>
-<line x1="660" y1="290" x2="660" y2="325" stroke="#1a1a1a" stroke-width="1.6"/>
+<line x1="684" y1="240" x2="684" y2="300" stroke="#1a1a1a" stroke-width="1.6"/>
+<line x1="684" y1="300" x2="660" y2="300" stroke="#1a1a1a" stroke-width="1.6"/>
+<line x1="660" y1="300" x2="660" y2="325" stroke="#1a1a1a" stroke-width="1.6"/>
 <circle cx="660" cy="330" r="5" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
 <text x="660" y="320" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="#1a1a1a" text-anchor="middle">I8</text>
 <rect x="1124" y="200" width="52" height="40" rx="3" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
 <text x="1150" y="216" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a" text-anchor="middle">B4</text>
-<text x="1150" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">suelo</text>
+<text x="1150" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">SMT100</text>
 <line x1="1136" y1="150" x2="1136" y2="200" stroke="#c62828" stroke-width="1.6"/>
 <circle cx="1136" cy="150" r="3.2" fill="#c62828"/>
 <line x1="1150" y1="172" x2="1150" y2="200" stroke="#1565c0" stroke-width="1.6"/>
@@ -134,7 +127,7 @@
 <text x="1145" y="320" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="#1a1a1a" text-anchor="middle">U1</text>
 <rect x="1189" y="200" width="52" height="40" rx="3" fill="#fff" stroke="#1a1a1a" stroke-width="1.4"/>
 <text x="1215" y="216" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a" text-anchor="middle">B5</text>
-<text x="1215" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">radiación</text>
+<text x="1215" y="232" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#55616b" text-anchor="middle">LPPYRA03</text>
 <line x1="1201" y1="150" x2="1201" y2="200" stroke="#c62828" stroke-width="1.6"/>
 <circle cx="1201" cy="150" r="3.2" fill="#c62828"/>
 <line x1="1215" y1="172" x2="1215" y2="200" stroke="#1565c0" stroke-width="1.6"/>
@@ -272,12 +265,11 @@
 <text x="46" y="852" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">S1  selector Manual / Automático</text>
 <text x="451" y="852" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">S2  pulsador riego manual</text>
 <text x="856" y="852" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">S0  hongo de emergencia (ver nota)</text>
-<text x="46" y="870" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B1  sensor de lluvia, contacto de relé</text>
+<text x="46" y="870" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B1  sensor de lluvia Hydreon RG-11 (relé NA)</text>
 <text x="451" y="870" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">S3  pulsador reconocer alarmas</text>
-<text x="856" y="870" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B2  transmisor de temperatura 0-10 V</text>
-<text x="46" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B3  transmisor de humedad relativa 0-10 V</text>
-<text x="451" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B4  sensor de humedad de suelo 0-10 V</text>
-<text x="856" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B5  sensor de radiación solar 0-10 V</text>
-<text x="46" y="906" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">K1 a K6  contactores 220 V CA (con guardamotor en motores)</text>
-<text x="451" y="906" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">H1  baliza y sirena 24 V CC · H2  piloto ámbar 24 V CC</text>
+<text x="856" y="870" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B2  E+E EE210: T 0-50 °C (I7) y HR 0-100 % (I8)</text>
+<text x="46" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B4  humedad de suelo TRUEBNER SMT100 0-10 V</text>
+<text x="451" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">B5  piranómetro Delta OHM LPPYRA03AV 0-10 V</text>
+<text x="856" y="888" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">K1 a K6  contactores 220 V CA (con guardamotor en motores)</text>
+<text x="46" y="906" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" fill="#1a1a1a" text-anchor="start">H1  baliza y sirena 24 V CC · H2  piloto ámbar 24 V CC</text>
 </svg>
